@@ -60,7 +60,7 @@ In this task, you will create the local Azure Functions settings file that defin
    - **ENVIRONMENT** — Set to `local` which tells the application to load the `local:` section from `app_config.yaml`.
    - **FUNCTIONS_EXTENSION_VERSION** — Uses Azure Functions v4 runtime.
 
-1. Navigate to the **Azure Portal**, open your **Storage Account** **(1)** (`devdataextwuSa<inject_random_string>`), go to **Access keys** **(2)**, and copy the **Connection string** **(3)**.
+1. Navigate to the **Azure Portal**, open your **Storage Account** **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`), go to **Access keys** **(2)**, and copy the **Connection string** **(3)**.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image04.png)
 
@@ -101,7 +101,7 @@ In this task, you will update the application configuration file with the actual
    - **chat_history** — Cosmos DB SQL API endpoint, database and container names
    - **blob_storage** — Storage account URL and container name
 
-1. Start with the **Key Vault URI**. In the Azure Portal, open your Key Vault **(1)** (`devdataextwuKv0`), go to **Overview** **(2)**, and copy the **Vault URI** **(3)**.
+1. Start with the **Key Vault URI**. In the Azure Portal, open your Key Vault **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0`), go to **Overview** **(2)**, and copy the **Vault URI** **(3)**.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image06.png)
 
@@ -109,7 +109,7 @@ In this task, you will update the application configuration file with the actual
 
    ```yaml
    local:
-     key_vault_uri: "https://devdataextwuKv0.vault.azure.net/"
+     key_vault_uri: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/"
    ```
 
 1. Retrieve the **tenant_id** by running the following command in the terminal:
@@ -126,7 +126,7 @@ In this task, you will update the application configuration file with the actual
 
 In this task, you will gather all remaining endpoints and configuration values from your deployed Azure resources to complete the app_config.yaml file.
 
-1. Get the **Azure OpenAI endpoint**. In the Azure Portal, navigate to your Azure OpenAI resource **(1)** (`devdataextwuaoai0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** URL **(3)**.
+1. Get the **Azure OpenAI endpoint**. In the Azure Portal, navigate to your Azure OpenAI resource **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** URL **(3)**.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image08.png)
 
@@ -137,7 +137,7 @@ In this task, you will gather all remaining endpoints and configuration values f
      model_name:
        value: "gpt-4o"
      endpoint:
-       value: "https://devdataextwuaoai0.openai.azure.com/openai/deployments/gpt-4o"
+       value: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o"
      access_key:
        key: "open-ai-key"
        type: "secret"
@@ -147,7 +147,7 @@ In this task, you will gather all remaining endpoints and configuration values f
 
    >**Note:** The `access_key` field uses `type: "secret"` which means the application resolves the value from Azure Key Vault using the key name `open-ai-key`. The Terraform deployment automatically stored this secret in Key Vault.
 
-1. Get the **Content Understanding endpoint**. In the Azure Portal, navigate to your AI Services resource **(1)** (`devdataextwuais0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** **(3)**.
+1. Get the **Content Understanding endpoint**. In the Azure Portal, navigate to your AI Services resource **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wuais0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** **(3)**.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image09.png)
 
@@ -160,7 +160,7 @@ In this task, you will gather all remaining endpoints and configuration values f
    ```yaml
    content_understanding:
      endpoint:
-       value: "https://devdataextwuais0.cognitiveservices.azure.com/"
+       value: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/"
      subscription_key:
        key: "ai-foundry-key"
        type: "secret"
@@ -170,7 +170,7 @@ In this task, you will gather all remaining endpoints and configuration values f
        value: "<your-ai-project-id>"
    ```
 
-1. Get the **Cosmos DB SQL API endpoint** for chat history. Navigate to your Cosmos DB SQL API account **(1)** (`devdataextwucosmoskb0`) and copy the **URI** **(2)** from the overview page.
+1. Get the **Cosmos DB SQL API endpoint** for chat history. Navigate to your Cosmos DB SQL API account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`) and copy the **URI** **(2)** from the overview page.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image11.png)
 
@@ -179,7 +179,7 @@ In this task, you will gather all remaining endpoints and configuration values f
    ```yaml
    chat_history:
      endpoint:
-       value: "https://devdataextwucosmoskb0.documents.azure.com:443/"
+       value: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/"
      db_name:
        value: "knowledge-base-db"
      chat_history_container_name:
@@ -190,7 +190,7 @@ In this task, you will gather all remaining endpoints and configuration values f
        value: "Data Extraction AI"
    ```
 
-1. Get the **Storage Account URL**. Navigate to your Storage Account **(1)** (`devdataextwuSa<inject_random_string>`) and copy the **Blob service endpoint** **(2)** from the overview page.
+1. Get the **Storage Account URL**. Navigate to your Storage Account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`) and copy the **Blob service endpoint** **(2)** from the overview page.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image12.png)
 

@@ -134,7 +134,7 @@ In this task, you will upload the configuration to the running Function App, whi
 
 In this task, you will navigate to Cosmos DB in the Azure Portal and inspect the stored configuration document.
 
-1. Open the **Azure Portal** and navigate to your Cosmos DB (Mongo API) account **(1)** (`devdataextwucosmos0`).
+1. Open the **Azure Portal** and navigate to your Cosmos DB (Mongo API) account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
 
 1. Open **Data Explorer** **(1)** from the left menu.
 
@@ -240,7 +240,7 @@ In this task, you will send the sample lease agreement PDF to the ingestion endp
 
 In this task, you will inspect the extracted document data stored in Cosmos DB.
 
-1. Navigate to the **Azure Portal** and open your Cosmos DB (Mongo API) account **(1)** (`devdataextwucosmos0`).
+1. Navigate to the **Azure Portal** and open your Cosmos DB (Mongo API) account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
 
 1. Open **Data Explorer** **(1)** and expand the **data-extraction-db** **(2)** database.
 
@@ -324,7 +324,7 @@ In this task, you will examine the individual extracted field values and their m
 
 In this task, you will verify that the document's markdown representation was uploaded to Azure Blob Storage.
 
-1. In the Azure Portal, navigate to your **Storage Account** **(1)** (`devdataextwuSa<inject_random_string>`).
+1. In the Azure Portal, navigate to your **Storage Account** **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`).
 
 1. Open **Containers** **(1)** from the left menu and click on the **processed** **(2)** container.
 

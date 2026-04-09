@@ -104,17 +104,22 @@ In this task, you will configure the Terraform variables that control resource n
    # Environment name (dev, test, prod, etc.)
    environment_name = "dev"
 
-   # Use case name for resource naming
-   usecase_name = "dataext"
+   # Use case name for resource naming — MUST include your DeploymentID to avoid conflicts
+   usecase_name = "dataext<inject key="DeploymentID" />"
+
+   # Resource group — use your existing CloudLabs resource group
+   existing_resource_group_name = "<inject key="Resource Group Name" />"
    ```
 
    Replace `<your-subscription-id>` with your actual Azure Subscription ID (the one you selected in Task 1, Step 4). You can get it by running `az account show --query id -o tsv` in the terminal.
+
+   >**Note:** The `<inject key="DeploymentID" />` placeholder is auto-replaced by CloudLabs with your unique deployment ID (e.g., `12345`). This ensures all Azure resource names are unique per student and avoids conflicts with Key Vault soft-delete or pre-existing resources.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image07.png)
 
 1. **Save** the file (**Ctrl+S**) and close the editor tab.
 
-   >**Note:** The resource naming convention follows the pattern `{environment}{usecase}{location_abbr}` — for example, `devdataextwu`. All resources will include this prefix followed by a suffix indicating the resource type (e.g., `devdataextwuKv0` for Key Vault, `devdataextwucosmos0` for Cosmos DB).
+   >**Note:** The resource naming convention follows the pattern `{environment}{usecase}{location_abbr}` — for example, `devdataext12345wu`. All resources will include this prefix followed by a suffix indicating the resource type (e.g., `devdataext12345wuKv0` for Key Vault, `devdataext12345wucosmos0` for Cosmos DB). The DeploymentID makes each student's resources unique.
 
 1. Review the **variables.tf** **(1)** file to understand all available configuration options. Notice the key variables:
 
@@ -190,7 +195,7 @@ In this task, you will navigate to the Azure Portal and verify that all resource
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image13.png)
 
-1. Find and click on the resource group named **devdataextwuRg0** **(1)** (or the name matching your Terraform prefix).
+1. Find and click on the resource group named **<inject key="Resource Group Name" enableCopy="false" />** **(1)**.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image14.png)
 
@@ -198,15 +203,15 @@ In this task, you will navigate to the Azure Portal and verify that all resource
 
    | Resource Type | Expected Name Pattern |
    |---|---|
-   | Key Vault | `devdataextwuKv0` |
-   | Log Analytics Workspace | `devdataextwuLog0` |
-   | Azure Cosmos DB account (Mongo) | `devdataextwucosmos0` |
-   | Azure Cosmos DB account (SQL) | `devdataextwucosmoskb0` |
-   | Azure OpenAI | `devdataextwuaoai0` |
-   | AI services | `devdataextwuais0` |
-   | Function App | `devdataextwufunc<inject_random_string>` |
-   | Storage Account | `devdataextwuSa<inject_random_string>` |
-   | Application Insights | `devdataextwuAppi` |
+   | Key Vault | `devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0` |
+   | Log Analytics Workspace | `devdataext<inject key="DeploymentID" enableCopy="false" />wuLog0` |
+   | Azure Cosmos DB account (Mongo) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0` |
+   | Azure Cosmos DB account (SQL) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0` |
+   | Azure OpenAI | `devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0` |
+   | AI services | `devdataext<inject key="DeploymentID" enableCopy="false" />wuais0` |
+   | Function App | `devdataext<inject key="DeploymentID" enableCopy="false" />wufunc*****` (random 5-char suffix) |
+   | Storage Account | `devdataext<inject key="DeploymentID" enableCopy="false" />wusa0` |
+   | Application Insights | `devdataext<inject key="DeploymentID" enableCopy="false" />wuAppi` |
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image15.png)
 
@@ -214,22 +219,22 @@ In this task, you will navigate to the Azure Portal and verify that all resource
 
    ```powershell
    # Store Cosmos DB MongoDB connection string
-   $cosmosConn = az cosmosdb keys list --name devdataextwucosmos0 --resource-group <your-resource-group> --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
+   $cosmosConn = az cosmosdb keys list --name devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0 --resource-group <inject key="Resource Group Name" enableCopy="false" /> --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
    Set-Content -Path "$env:TEMP\cosmosconn.txt" -Value $cosmosConn -NoNewline
-   az keyvault secret set --vault-name devdataextwuKv0 --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt"
+   az keyvault secret set --vault-name devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0 --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt"
 
    # Store Azure OpenAI API key
-   $openaiKey = az cognitiveservices account keys list --name aoaidevdataextwu --resource-group <your-resource-group> --query "key1" -o tsv
-   az keyvault secret set --vault-name devdataextwuKv0 --name "open-ai-key" --value $openaiKey
+   $openaiKey = az cognitiveservices account keys list --name devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0 --resource-group <inject key="Resource Group Name" enableCopy="false" /> --query "key1" -o tsv
+   az keyvault secret set --vault-name devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0 --name "open-ai-key" --value $openaiKey
 
    # Store AI Services subscription key
-   $aiKey = az cognitiveservices account keys list --name devdataextwuais0 --resource-group <your-resource-group> --query "key1" -o tsv
-   az keyvault secret set --vault-name devdataextwuKv0 --name "ai-foundry-key" --value $aiKey
+   $aiKey = az cognitiveservices account keys list --name devdataext<inject key="DeploymentID" enableCopy="false" />wuais0 --resource-group <inject key="Resource Group Name" enableCopy="false" /> --query "key1" -o tsv
+   az keyvault secret set --vault-name devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0 --name "ai-foundry-key" --value $aiKey
    ```
 
-   >**Note:** Replace `<your-resource-group>` with your actual resource group name. The Cosmos DB connection string is saved to a temp file first because it contains `&` characters that PowerShell would misinterpret.
+   >**Note:** The Cosmos DB connection string is saved to a temp file first because it contains `&` characters that PowerShell would misinterpret.
 
-1. Verify the secrets were created. Click on the **Key Vault** resource (`devdataextwuKv0`) in the Azure Portal. Navigate to **Secrets** **(1)** in the left menu. You should see three secrets:
+1. Verify the secrets were created. Click on the **Key Vault** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0`) in the Azure Portal. Navigate to **Secrets** **(1)** in the left menu. You should see three secrets:
 
    - `cosmosdb-connection-string`
    - `open-ai-key`
@@ -241,7 +246,7 @@ In this task, you will navigate to the Azure Portal and verify that all resource
 
 In this task, you will navigate to Azure AI Foundry to understand how Azure Content Understanding and Azure OpenAI are configured.
 
-1. In the Azure Portal, go back to your resource group and click on the **Azure AI Foundry** resource (`devdataextwuais0`).
+1. In the Azure Portal, go back to your resource group and click on the **Azure AI Foundry** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuais0`).
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image17.png)
 
@@ -249,7 +254,7 @@ In this task, you will navigate to Azure AI Foundry to understand how Azure Cont
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image18.png)
 
-1. Go back to the resource group and click on the **Azure Open AI** resource for OpenAI (`aoaidevdataextwu`) and click on **Go to foundry portal**.
+1. Go back to the resource group and click on the **Azure Open AI** resource for OpenAI (`devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0`) and click on **Go to foundry portal**.
 
 1. Navigate to **deployments** **(1)** and verify that the **gpt-4o** model has been deployed with the following settings:
 
@@ -267,7 +272,7 @@ In this task, you will navigate to Azure AI Foundry to understand how Azure Cont
 
 In this task, you will explore the two Cosmos DB accounts and understand their different roles in the solution.
 
-1. In your resource group, click on the **Cosmos DB account** **(1)** with the Mongo API (`devdataextwucosmos0`).
+1. In your resource group, click on the **Cosmos DB account** **(1)** with the Mongo API (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image21.png)
 
@@ -280,7 +285,7 @@ In this task, you will explore the two Cosmos DB accounts and understand their d
 
    >**Note:** The database and collections will be created automatically when the application first runs.
 
-1. Go back to the resource group and click on the **Cosmos DB account** **(1)** with the SQL API (`devdataextwucosmoskb0`).
+1. Go back to the resource group and click on the **Cosmos DB account** **(1)** with the SQL API (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`).
 
 1. Open **Data Explorer** **(1)**. Notice the **knowledge-base-db** database with the **chat-history** container. This stores conversational query history per user session.
 

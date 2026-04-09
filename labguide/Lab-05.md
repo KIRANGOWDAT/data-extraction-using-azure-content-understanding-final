@@ -193,7 +193,7 @@ In this task, you will observe how the system maintains conversational context a
 
    >**Note:** The query includes "Collection1" because the system uses `FunctionChoiceBehavior.Required()`, which forces the LLM to call `get_collection_data()` on every request. Including the collection name ensures the LLM passes the correct collection ID to the function.
 
-1. Navigate to the Azure Portal, open the Cosmos DB SQL API account **(1)** (`devdataextwucosmoskb0`), and open **Data Explorer** **(2)**.
+1. Navigate to the Azure Portal, open the Cosmos DB SQL API account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`), and open **Data Explorer** **(2)**.
 
 1. Expand **knowledge-base-db** **(3)** → **chat-history** **(4)** and browse the stored conversation documents. You should see entries for your session with both user messages and assistant responses.
 
@@ -252,10 +252,19 @@ In this task, you will deploy the local Function App code to the Azure Function 
    Copy-Item requirements.txt src\
    ```
 
+1. Retrieve your **Function App name** from Azure. The Terraform deployment created a Function App with a random suffix, so the exact name varies per deployment. Run the following command to capture it in a variable for the remaining steps:
+
+   ```
+   $funcApp = (az functionapp list --resource-group <inject key="AzureResourceGroup" enableCopy="false" /> --query "[0].name" -o tsv)
+   echo "Your Function App name is: $funcApp"
+   ```
+
+   > **Note:** Make sure the output shows a name like `devdataext<inject key="DeploymentID" enableCopy="false" />wufunc*****` (where `*****` is a random 5-character suffix). You will use `$funcApp` in subsequent commands.
+
 1. Deploy the Function App to Azure using Azure Functions Core Tools:
 
    ```
-   func azure functionapp publish devdataextwufunc<inject key="DeploymentID" enableCopy="false" /> --python --script-root ./src/
+   func azure functionapp publish $funcApp --python --script-root ./src/
    ```
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image18.png)
@@ -270,14 +279,16 @@ In this task, you will deploy the local Function App code to the Azure Function 
 
    > **Note:** The Python v2 deployment does not list individual function URLs in the output. You can find them in the Azure Portal under your Function App's **Functions** blade, or by running:
    > ```
-   > az functionapp function list --name devdataextwufunc<inject key="DeploymentID" enableCopy="false" /> --resource-group <inject key="AzureResourceGroup" enableCopy="false" /> --query "[].invokeUrlTemplate" -o tsv
+   > az functionapp function list --name $funcApp --resource-group <inject key="AzureResourceGroup" enableCopy="false" /> --query "[].invokeUrlTemplate" -o tsv
    > ```
 
 1. Note the deployed endpoint base URL:
 
    ```
-   https://devdataextwufunc<inject key="DeploymentID" enableCopy="false" />.azurewebsites.net/api/
+   https://<your-function-app-name>.azurewebsites.net/api/
    ```
+
+   > **Tip:** You can see your actual Function App URL by running `echo "https://$funcApp.azurewebsites.net/api/"`
 
 1. Open **src/resources/app_config.yaml** and scroll down to the `dev:` section (below the `local:` section). The deployed Function App reads the `dev:` section because the `ENVIRONMENT` variable defaults to `"dev"`.
 
@@ -285,14 +296,14 @@ In this task, you will deploy the local Function App code to the Azure Function 
 
    | Setting | Value |
    |---------|-------|
-   | `key_vault_uri` | `https://devdataextwukv<inject key="DeploymentID" enableCopy="false" />.vault.azure.net/` |
+   | `key_vault_uri` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wukv0.vault.azure.net/` |
    | `tenant_id` | Your Azure tenant ID (same as `local:`) |
    | `user_managed_identity.client_id` | Leave empty (`""`) — the deployed app uses **system-assigned managed identity** |
    | `llm.endpoint` | `https://<your-openai-resource>.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
    | `content_understanding.endpoint` | `https://<your-content-understanding-resource>.cognitiveservices.azure.com/` (same as `local:`) |
    | `content_understanding.project_id` | Your AI Foundry project ID (same as `local:`) |
-   | `chat_history.endpoint` | `https://devdataextwucosmoskb<inject key="DeploymentID" enableCopy="false" />.documents.azure.com:443/` |
-   | `blob_storage.account_url` | `https://devdataextwusa<inject key="DeploymentID" enableCopy="false" />.blob.core.windows.net/` |
+   | `chat_history.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
+   | `blob_storage.account_url` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wusa0.blob.core.windows.net/` |
 
    > **Tip:** The easiest approach is to copy all values from your `local:` section and paste them into the corresponding `dev:` fields. The **secret references** (like `cosmosdb-connection-string`, `open-ai-key`, `ai-foundry-key`) do **not** need to change — they point to the same Key Vault secrets.
 
@@ -302,7 +313,7 @@ In this task, you will deploy the local Function App code to the Azure Function 
 
    ```
    Copy-Item requirements.txt src\
-   func azure functionapp publish devdataextwufunc<inject key="DeploymentID" enableCopy="false" /> --python --script-root ./src/
+   func azure functionapp publish $funcApp --python --script-root ./src/
    ```
 
    Wait for the deployment to complete before testing the deployed endpoints.
@@ -314,7 +325,7 @@ In this task, you will verify that the deployed API endpoints are working correc
 1. Test the **health check** on the deployed endpoint:
 
    ```
-   curl.exe https://devdataextwufunc<inject key="DeploymentID" enableCopy="false" />.azurewebsites.net/api/v1/health
+   curl.exe https://$funcApp.azurewebsites.net/api/v1/health
    ```
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image21.png)
@@ -324,7 +335,7 @@ In this task, you will verify that the deployed API endpoints are working correc
 1. Upload the extraction configuration to the **deployed** endpoint:
 
    ```
-   curl.exe -X PUT "https://devdataextwufunc<inject key="DeploymentID" enableCopy="false" />.azurewebsites.net/api/configs/document-extraction/versions/v1.0" `
+   curl.exe -X PUT "https://$funcApp.azurewebsites.net/api/configs/document-extraction/versions/v1.0" `
      -H "Content-Type: application/json" `
      -d @configs/document-extraction-v1.0.json
    ```
@@ -334,7 +345,7 @@ In this task, you will verify that the deployed API endpoints are working correc
 1. Ingest the document to the **deployed** endpoint:
 
    ```
-   curl.exe -X POST "https://devdataextwufunc<inject key="DeploymentID" enableCopy="false" />.azurewebsites.net/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
      -H "Content-Type: application/octet-stream" `
      --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
@@ -344,7 +355,7 @@ In this task, you will verify that the deployed API endpoints are working correc
 1. Query the deployed endpoint:
 
    ```
-   curl.exe -X POST "https://devdataextwufunc<inject key="DeploymentID" enableCopy="false" />.azurewebsites.net/api/v1/query" `
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" `
      -H "Content-Type: application/json" `
      -H "x-user: labuser@contoso.com" `
      -d '{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"Summarize all key terms in Collection1.\"}'
@@ -358,7 +369,7 @@ In this task, you will verify that the deployed API endpoints are working correc
 
 In this task, you will use Application Insights to monitor the deployed Function App's performance and troubleshoot issues.
 
-1. In the Azure Portal, navigate to your **Function App** (`devdataextwu<inject key="DeploymentID" enableCopy="false" />`). In the left menu, click **Settings** **(1)** > **Application Insights** **(2)**, then click the **Application Insights resource name** link **(3)** to open the connected App Insights instance.
+1. In the Azure Portal, navigate to your **Function App** (the name you captured in the `$funcApp` variable earlier). In the left menu, click **Settings** **(1)** > **Application Insights** **(2)**, then click the **Application Insights resource name** link **(3)** to open the connected App Insights instance.
 
    ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image25.png)
 
