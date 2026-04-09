@@ -36,7 +36,7 @@
     "AzureSubscriptionID": "[subscription().subscriptionId]",
     "AzureTenantID": "[subscription().tenantId]",
     "vmName": "[concat('labvm-', parameters('DeploymentID'))]",
-    "location": "[resourceGroup().location]",
+    "location": "swedencentral",
     "virtualNetworkName": "labvNet",
     "subnetName": "Subnet",
     "addressPrefix": "10.0.0.0/16",
@@ -46,7 +46,7 @@
     "networkInterfaceName": "[concat(variables('vmName'), '-nic')]",
     "publicIpAddressName": "[concat(variables('vmName'), '-pip')]",
     "publicIpAddressDNSName": "[concat('labvm', uniqueString(resourceGroup().id))]",
-    "virtualMachineSize": "Standard_D4s_v3"
+    "virtualMachineSize": "Standard_B4as_v2"
   },
   "resources": [
     {
@@ -211,7 +211,7 @@
         "settings": {
           "fileUris": [
             "https://experienceazure.blob.core.windows.net/templates/cloudlabs-common/cloudlabs-windows-functions.ps1",
-            "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/cloudlabs-setup/psscript.ps1"
+            "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/cloudlabs-setup/psscript.ps1"
           ]
         },
         "protectedSettings": {

@@ -532,4 +532,5 @@ Write-Log "========================================"
 Stop-Transcript
 
 # Signal completion
-New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $(Get-Date)" -Force
+$completionTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force
