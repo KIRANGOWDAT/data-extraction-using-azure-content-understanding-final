@@ -391,7 +391,7 @@ existing_resource_group_name = "$rgName"
 resource_group_location      = "$location"
 resource_group_location_abbr = "$locationAbbr"
 environment_name             = "dev"
-usecase_name                 = "dataext$DeploymentID"
+usecase_name                 = "de$DeploymentID"
 "@
     Set-Content -Path "$iacPath\terraform.tfvars" -Value $tfvarsContent -Force
     Write-Log "terraform.tfvars created."
@@ -424,9 +424,6 @@ function Populate-KeyVaultSecrets {
     $rgName = Get-VMResourceGroup
     $location = (az group show --name $rgName --query "location" -o tsv)
     $locationAbbr = Get-LocationAbbreviation -Location $location
-    $prefix = "devdataext${DeploymentID}${locationAbbr}"
-    $prefixLower = $prefix.ToLower()
-
     # Discover actual resource names from the resource group (handles naming patterns reliably)
     $kvName = (az keyvault list --resource-group $rgName --query "[0].name" -o tsv)
     $cosmosName = (az cosmosdb list --resource-group $rgName --query "[?contains(name,'cosmos0')].name" -o tsv)
