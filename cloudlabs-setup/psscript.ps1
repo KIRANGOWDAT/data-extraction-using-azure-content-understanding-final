@@ -330,50 +330,121 @@ function Set-AutoLogon {
 }
 
 # ============================================================================
-#  VALIDATION SCRIPT
+#  DEPLOY AZURE INFRASTRUCTURE (Terraform)
 # ============================================================================
 
-function Create-ValidationScript {
-    Write-Log "Creating validation script on desktop..."
-    $desktopPath = "C:\Users\$adminUsername\Desktop"
-    if (-not (Test-Path $desktopPath)) { $desktopPath = "C:\Users\Public\Desktop" }
-
-    $validationScript = @'
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Lab Environment Validation" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
-
-$checks = @(
-    @{ Name = "Python 3.12"; Command = { python --version 2>&1 } },
-    @{ Name = "Azure CLI"; Command = { az version 2>&1 | ConvertFrom-Json | Select-Object -ExpandProperty 'azure-cli' } },
-    @{ Name = "Terraform"; Command = { terraform version 2>&1 | Select-Object -First 1 } },
-    @{ Name = "Git"; Command = { git --version 2>&1 } },
-    @{ Name = "Node.js"; Command = { node --version 2>&1 } },
-    @{ Name = "Azure Functions Core Tools"; Command = { func --version 2>&1 } },
-    @{ Name = "VS Code"; Command = { code --version 2>&1 | Select-Object -First 1 } },
-    @{ Name = "Lab Repository"; Command = { if (Test-Path "C:\LabFiles\data-extraction-using-azure-content-understanding") { "Present" } else { "NOT FOUND" } } }
-)
-
-foreach ($check in $checks) {
-    try {
-        $result = & $check.Command
-        Write-Host "[PASS] $($check.Name): $result" -ForegroundColor Green
-    } catch {
-        Write-Host "[FAIL] $($check.Name): Not found or error" -ForegroundColor Red
+function Get-LocationAbbreviation {
+    param([string]$Location)
+    $map = @{
+        "westus"         = "wu";  "westus2"        = "wu2"; "westus3"        = "wu3"
+        "eastus"         = "eu";  "eastus2"        = "eu2"
+        "centralus"      = "cu";  "southcentralus" = "scu"; "northcentralus" = "ncu"
+        "northeurope"    = "ne";  "westeurope"     = "we"
+        "uksouth"        = "uks"; "ukwest"         = "ukw"
+        "japaneast"      = "je";  "southeastasia"  = "sea"
+        "australiaeast"  = "ae";  "canadacentral"  = "cc"
+        "swedencentral"  = "sc";  "switzerlandnorth" = "swn"
     }
+    if ($map.ContainsKey($Location)) { return $map[$Location] }
+    return $Location.Substring(0, [Math]::Min(3, $Location.Length))
 }
 
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Validation Complete" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Read-Host "Press Enter to close"
-'@
-    Set-Content -Path "$desktopPath\Validate-LabSetup.ps1" -Value $validationScript -Force
-    Write-Log "Validation script created."
+function Deploy-AzureInfrastructure {
+    Write-Log "Starting Azure infrastructure deployment..."
+
+    # Login to Azure CLI
+    Write-Log "Logging in to Azure CLI..."
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    az login -u $AzureUserName -p $AzurePassword --tenant $AzureTenantID 2>&1 | Out-File "C:\WindowsAzure\Logs\az-login.log" -Append
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "ERROR: Azure login failed. Terraform deployment skipped."
+        return
+    }
+    az account set --subscription $AzureSubscriptionID
+    Write-Log "Azure login successful."
+
+    # Detect resource group and location
+    $rgName = (az group list --query "[0].name" -o tsv)
+    $location = (az group show --name $rgName --query "location" -o tsv)
+    $locationAbbr = Get-LocationAbbreviation -Location $location
+    Write-Log "Resource Group: $rgName | Location: $location ($locationAbbr)"
+
+    # Create terraform.tfvars
+    $iacPath = "C:\LabFiles\data-extraction-using-azure-content-understanding\iac"
+    $tfvarsContent = @"
+subscription_id              = "$AzureSubscriptionID"
+existing_resource_group_name = "$rgName"
+resource_group_location      = "$location"
+resource_group_location_abbr = "$locationAbbr"
+environment_name             = "dev"
+usecase_name                 = "dataext$DeploymentID"
+"@
+    Set-Content -Path "$iacPath\terraform.tfvars" -Value $tfvarsContent -Force
+    Write-Log "terraform.tfvars created."
+
+    # Run Terraform
+    Push-Location $iacPath
+    Write-Log "Running terraform init..."
+    terraform init -no-color 2>&1 | Out-File "C:\WindowsAzure\Logs\terraform-init.log" -Append
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "ERROR: terraform init failed. Check C:\WindowsAzure\Logs\terraform-init.log"
+        Pop-Location
+        return
+    }
+    Write-Log "terraform init completed."
+
+    Write-Log "Running terraform apply (this may take 20-30 minutes)..."
+    terraform apply -auto-approve -no-color 2>&1 | Out-File "C:\WindowsAzure\Logs\terraform-apply.log" -Append
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "ERROR: terraform apply failed. Check C:\WindowsAzure\Logs\terraform-apply.log"
+        Pop-Location
+        return
+    }
+    Pop-Location
+    Write-Log "Terraform deployment completed successfully."
 }
 
+function Populate-KeyVaultSecrets {
+    Write-Log "Populating Key Vault secrets..."
+
+    $rgName = (az group list --query "[0].name" -o tsv)
+    $location = (az group show --name $rgName --query "location" -o tsv)
+    $locationAbbr = Get-LocationAbbreviation -Location $location
+    $prefix = "devdataext${DeploymentID}${locationAbbr}"
+
+    # Cosmos DB MongoDB connection string (contains & chars, must use file)
+    $cosmosConn = az cosmosdb keys list --name "${prefix}cosmos0" --resource-group $rgName --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
+    if ($cosmosConn) {
+        Set-Content -Path "$env:TEMP\cosmosconn.txt" -Value $cosmosConn -NoNewline
+        az keyvault secret set --vault-name "${prefix}Kv0" --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt" 2>&1 | Out-Null
+        Remove-Item "$env:TEMP\cosmosconn.txt" -Force -ErrorAction SilentlyContinue
+        Write-Log "Stored cosmosdb-connection-string in Key Vault."
+    } else {
+        Write-Log "WARNING: Could not retrieve Cosmos DB connection string."
+    }
+
+    # Azure OpenAI key
+    $openaiKey = az cognitiveservices account keys list --name "${prefix}aoai0" --resource-group $rgName --query "key1" -o tsv
+    if ($openaiKey) {
+        az keyvault secret set --vault-name "${prefix}Kv0" --name "open-ai-key" --value $openaiKey 2>&1 | Out-Null
+        Write-Log "Stored open-ai-key in Key Vault."
+    } else {
+        Write-Log "WARNING: Could not retrieve Azure OpenAI key."
+    }
+
+    # AI Services key
+    $aiKey = az cognitiveservices account keys list --name "${prefix}ais0" --resource-group $rgName --query "key1" -o tsv
+    if ($aiKey) {
+        az keyvault secret set --vault-name "${prefix}Kv0" --name "ai-foundry-key" --value $aiKey 2>&1 | Out-Null
+        Write-Log "Stored ai-foundry-key in Key Vault."
+    } else {
+        Write-Log "WARNING: Could not retrieve AI Services key."
+    }
+
+    Write-Log "Key Vault secrets populated."
+}
+
+# ============================================================================
 # ============================================================================
 #  MAIN EXECUTION
 # ============================================================================
@@ -407,9 +478,12 @@ Install-WindowsTerminal
 # Clone lab repository
 Clone-LabRepository
 
+# Deploy Azure infrastructure (Terraform) and populate secrets
+Deploy-AzureInfrastructure
+Populate-KeyVaultSecrets
+
 # User experience
 Create-DesktopShortcuts
-Create-ValidationScript
 
 # Auto-logon for CloudLabs
 if ($adminPassword -ne "") {

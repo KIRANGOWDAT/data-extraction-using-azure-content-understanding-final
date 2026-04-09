@@ -1,195 +1,176 @@
-# Exercise 1: Environment Setup and Architecture Overview
+﻿# Lab 01: Explore Azure Resources and Configure Content Understanding
 
-### Estimated Duration: 30 Minutes
+### Estimated Duration: 60 Minutes
 
 ## Overview
 
-In this exercise, you will verify your lab environment, explore the pre-cloned project repository, and study the solution architecture. By the end of this exercise, you will have a clear understanding of the project structure, the Azure services involved, and the three core workflows — Document Enquiry, Configuration Upload, and Document Ingestion — that power the intelligent document extraction pipeline.
+In this lab, you will explore the Azure resources that were automatically deployed for the document extraction pipeline. You will navigate to Azure AI Foundry to understand the Content Understanding project, verify the Azure OpenAI gpt-4o model deployment, and then set up the Python application locally by configuring it with the correct Azure resource endpoints.
 
 ## Objectives
 
-In this exercise, you will complete the following tasks:
+After completing this lab, you will have:
 
-- Task 1: Verify the lab environment
-- Task 2: Explore the project structure
-- Task 3: Review the solution architecture
-- Task 4: Explore Azure Content Understanding concepts
+- Explored the pre-deployed Azure resources in your resource group
+- Navigated Azure AI Foundry and the Content Understanding project
+- Verified the Azure OpenAI gpt-4o model deployment
+- Set up the Python virtual environment
+- Configured the application with Azure resource endpoints and keys
 
-### Task 1: Verify the lab environment
+### Task 1: Explore pre-deployed Azure resources
 
-In this task, you will run a pre-built validation script to confirm that all required tools are installed and ready on your lab virtual machine.
+In this task, you will navigate to the Azure Portal and explore the resources that were automatically deployed by Terraform during VM provisioning.
 
-1. On your lab VM desktop, right-click the **Validate-LabSetup.ps1** **(1)** file and select **Run with PowerShell** **(2)**.
+1. Open the **Azure Portal** using the desktop shortcut or navigate to [https://portal.azure.com](https://portal.azure.com). Sign in if prompted.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image01.png)
+1. In the Azure Portal, click on **Resource groups** in the left navigation menu, then click on your resource group **<inject key="Resource Group Name" enableCopy="false" />**.
 
-1. The script checks all required tools automatically. Verify that every item shows **[PASS]** in green:
+1. Review the list of deployed resources. You should see the following:
 
-   | Tool | Required Version |
-   |---|---|
-   | Python | 3.12 or later |
-   | Azure CLI | 2.60 or later |
-   | Terraform | 1.5.0 or later |
-   | Azure Functions Core Tools | v4.x |
-   | Git | Any |
-   | Node.js | 18.x or later |
-   | VS Code | Any |
-   | Lab Repository | Present at `C:\LabFiles` |
+   | Resource Type | Name Pattern | Purpose |
+   |---|---|---|
+   | Key Vault | `devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0` | Stores API keys and connection strings |
+   | Azure Cosmos DB (MongoDB) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0` | Stores extraction configs and extracted data |
+   | Azure Cosmos DB (SQL) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0` | Stores chat history |
+   | Azure OpenAI | `devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0` | Hosts the gpt-4o model |
+   | AI Services | `devdataext<inject key="DeploymentID" enableCopy="false" />wuais0` | Azure Content Understanding |
+   | Storage Account | `devdataext<inject key="DeploymentID" enableCopy="false" />wusa0` | Stores processed documents |
+   | Function App | `devdataext<inject key="DeploymentID" enableCopy="false" />wufunc*****` | Hosts the extraction API |
+   | Application Insights | `devdataext<inject key="DeploymentID" enableCopy="false" />wuAppi` | Monitoring and tracing |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image02.png)
+1. Click on the **Key Vault** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0`). In the left menu, click **Objects** > **Secrets**. Verify that three secrets are pre-populated:
 
-   >**Note:** If any item shows **[FAIL]**, contact your lab administrator. All tools have been pre-installed on your lab VM.
+   - `cosmosdb-connection-string` — Cosmos DB MongoDB connection string
+   - `open-ai-key` — Azure OpenAI API key
+   - `ai-foundry-key` — AI Services subscription key
 
-### Task 2: Explore the project structure
+   >**Note:** These secrets were automatically stored by the VM setup script. The application reads them at runtime via Key Vault references, so API keys are never hardcoded in configuration files.
 
-In this task, you will open the pre-cloned repository in Visual Studio Code and examine how the codebase is organized.
+### Task 2: Navigate to Azure AI Foundry and Content Understanding
 
-1. On the desktop, double-click the **Visual Studio Code** shortcut. It opens directly into the lab repository at `C:\LabFiles\data-extraction-using-azure-content-understanding`.
+In this task, you will explore Azure AI Foundry to understand the Content Understanding project that powers document extraction.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image03.png)
+1. In your resource group, click on the **AI Services** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuais0`).
 
-1. In the VS Code **Explorer** panel on the left, review the top-level folder structure:
+1. In the left menu, expand **Resource Management** and click on **Keys and Endpoint**. Note the following — you will need these when configuring the application:
 
-   | Folder/File | Purpose |
-   |---|---|
-   | `configs/` | Sample extraction configuration JSON files |
-   | `docs/` | Architecture documentation and design decisions |
-   | `document_samples/` | Sample PDF documents for testing |
-   | `iac/` | Terraform infrastructure-as-code modules |
-   | `src/` | Python source code (Azure Functions application) |
-   | `tests/` | Unit and integration tests |
-   | `deploy.sh` | One-click deployment script |
-   | `requirements.txt` | Python package dependencies |
+   - **Endpoint** URL (e.g., `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/`)
+   - **KEY 1** (already stored in Key Vault as `ai-foundry-key`)
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image04.png)
+   >**Note:** Azure AI Content Understanding is a capability within Azure AI Services. It uses custom **analyzers** to extract structured fields from documents. The analyzers are created programmatically by the application when you upload an extraction configuration.
 
-1. Click on the **src/** **(1)** folder to expand it. This is the main application code:
+1. Go back to your resource group and click on the **AI Services** resource again. On the overview page, click **Go to Azure AI Foundry** to open the AI Foundry portal.
 
-   | Subfolder | Purpose |
-   |---|---|
-   | `configs/` | Application configuration management (YAML loader) |
-   | `controllers/` | API endpoint logic (health check, inference, ingestion) |
-   | `decorators/` | Custom error handling decorators |
-   | `models/` | Pydantic data models for requests, responses, and documents |
-   | `routes/` | Azure Functions HTTP trigger route definitions |
-   | `samples/` | Sample `.http` request files for testing APIs |
-   | `services/` | Business logic (CU client, Cosmos DB, LLM manager, blob storage) |
-   | `utils/` | Utility functions (citation cleaner, monitoring, singleton) |
+1. In Azure AI Foundry, you should see the project **devdataext<inject key="DeploymentID" enableCopy="false" />wu-rag-project** in the left navigation. Click on it.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image05.png)
+1. Note the **Project ID** displayed on the project overview page. Copy this value — you will need it when configuring the application in Task 5.
 
-1. Click on the **iac/** **(1)** folder to expand it. Notice the modular Terraform structure with separate modules for each Azure service:
+   >**What is a Content Understanding project?** A project in AI Foundry provides a workspace where Content Understanding analyzers are organized. When the application creates an analyzer, it tags it with this project ID so it appears under this project.
 
-   | Module | Azure Resource |
-   |---|---|
-   | `modules/ai/` | AI Hub, AI Foundry Project, AI Services |
-   | `modules/cosmos_db/` | Azure Cosmos DB (Mongo API and SQL API) |
-   | `modules/function_app/` | Azure Function App (Python, Linux) |
-   | `modules/keyvault/` | Azure Key Vault |
-   | `modules/loganalytics/` | Azure Log Analytics Workspace |
-   | `modules/storage_account/` | Azure Storage Account |
-   | `modules/azure_openai/` | Azure OpenAI deployment (gpt-4o) |
-   | `modules/appinsights/` | Application Insights |
+### Task 3: Explore the Azure OpenAI gpt-4o deployment
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image06.png)
+In this task, you will verify the Azure OpenAI model deployment that powers the natural language query interface.
 
-### Task 3: Review the solution architecture
+1. Go back to the Azure Portal. In your resource group, click on the **Azure OpenAI** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0`).
 
-In this task, you will open the architecture documentation from the repository and study the three core workflows that make up the solution.
+1. On the overview page, click **Go to Azure AI Foundry** (or **Go to Azure OpenAI Studio**).
 
-1. In VS Code Explorer, expand the **docs** **(1)** folder and click on **architecture.md** **(2)** to open it.
+1. Navigate to **Deployments** in the left menu. Verify that the **gpt-4o** model is deployed with:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image07.png)
+   - **Model:** gpt-4o
+   - **Version:** 2024-08-06
+   - **Deployment type:** Standard
 
-1. At the top of the file, you will find the **Table of Contents** listing the three main workflows. Scroll down to the **Proposed system architecture** section.
+1. Click on the **gpt-4o** deployment. Note the **Target URI** (endpoint) — it should look like:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image08.png)
+   ```
+   https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-04-01-preview
+   ```
 
-1. Notice the **architecture diagram** image reference at line 13: `![architecture diagram](./images/simplified-arch.drawio.png)`. To view the actual diagram, expand the **docs** > **images** **(1)** folder in the Explorer panel and click on **simplified-arch.drawio.png** **(2)**.
+   >**How does this fit the architecture?** When a user queries extracted data, the application uses **Semantic Kernel** to send the query + extracted document data to this gpt-4o deployment. The LLM formulates a response using the extracted fields as context.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image09.png)
+### Task 4: Set up the Python virtual environment
 
-1. Review the architecture diagram. The solution implements three main workflows:
+In this task, you will set up the Python virtual environment required to run the application locally.
 
-   - **Document Enquiry** — Users ask natural language questions about ingested documents. Azure OpenAI (via Semantic Kernel) retrieves data from Cosmos DB and returns a response with inline citations.
+1. On the desktop, double-click the **Visual Studio Code** shortcut to open the project.
 
-   - **Configuration Upload** — Administrators upload JSON extraction configurations. The system validates them and creates Azure Content Understanding analyzer schemas.
+1. In VS Code, open a new terminal by clicking **Terminal** > **New Terminal** from the menu bar (or press **Ctrl+`**).
 
-   - **Document Ingestion** — PDF documents are submitted for extraction. Azure Content Understanding extracts structured fields with bounding boxes and confidence scores, storing results in Cosmos DB.
+1. Verify you are in the project root directory:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image10.png)
+   ```
+   cd C:\LabFiles\data-extraction-using-azure-content-understanding
+   ```
 
-1. Scroll down in **architecture.md** to review the **Document enquiry workflow** sequence diagram written in Mermaid syntax. This flow shows:
+1. Create a Python virtual environment:
 
-   - The user submits a natural language query to the Azure Function.
-   - Semantic Kernel extracts the collection ID from the query.
-   - The system retrieves all extracted fields for that collection from Cosmos DB.
-   - Azure OpenAI formulates a response with inline citations referencing source documents.
+   ```
+   python -m venv .venv
+   ```
 
-1. Continue scrolling to review the **Configuration upload workflow** sequence diagram. This flow shows:
+1. Activate the virtual environment:
 
-   - The user uploads a JSON configuration file via the API.
-   - The configuration is validated and stored in Cosmos DB.
-   - An Azure Content Understanding analyzer schema is created for each collection row.
+   ```
+   .venv\Scripts\activate
+   ```
 
-1. Scroll further to review the **Document Ingestion Flow** sequence diagram. This flow shows:
+   You should see `(.venv)` appear at the beginning of your terminal prompt.
 
-   - A PDF document is uploaded and triggers the ingestion function.
-   - The extraction configuration is retrieved from Cosmos DB.
-   - Azure Content Understanding extracts fields per the analyzer schema.
-   - Extracted fields (with bounding boxes and confidence scores) are stored in Cosmos DB.
+1. Install the project dependencies:
 
-### Task 4: Explore Azure Content Understanding concepts
+   ```
+   pip install -r requirements.txt
+   ```
 
-In this task, you will review key design decisions and explore the sample configuration and documents included in the repository.
+   >**Note:** This installs all required Python packages including `azure-functions`, `azure-identity`, `azure-keyvault-secrets`, `azure-cosmos`, `semantic-kernel`, and other dependencies. This may take 2–3 minutes.
 
-1. In VS Code Explorer, expand **docs** > **design** > **decisions** **(1)** and click on **content-undestanding-vs-mllm-docint.md** **(2)**. This is an Architecture Decision Record (ADR) explaining why Azure Content Understanding was chosen over alternatives like Document Intelligence.
+### Task 5: Configure the application
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image11.png)
+In this task, you will configure the application with the correct Azure resource endpoints and keys so it can connect to Content Understanding, Azure OpenAI, Cosmos DB, and Key Vault.
 
-1. Review the key advantages of Azure Content Understanding highlighted in the document:
+1. In VS Code Explorer, navigate to **src** > **resources** and open **app_config.yaml**.
 
-   - **Multimodal ingestion** — Supports documents, images, video, and audio content.
-   - **Strongly-typed schemas** — Define exact field names, types, and descriptions for extraction.
-   - **Confidence scores** — Each extracted field includes a score indicating extraction reliability.
-   - **Bounding boxes** — Precise document coordinates for every extracted field, enabling traceability.
-   - **Analyzer schemas** — Reusable, versioned configurations that define what to extract.
+1. Scroll to the `local:` section. This is the configuration used when running the Function App locally. Update the following values:
 
-1. Navigate back to the Explorer panel. Expand the **configs** **(1)** folder and click on **document-extraction-v1.0.json** **(2)** to open the sample extraction configuration.
+   | Setting | Value |
+   |---------|-------|
+   | `key_vault_uri` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/` |
+   | `tenant_id` | Your Azure Tenant ID (find it in Azure Portal > Azure Active Directory > Overview) |
+   | `llm.endpoint.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o` |
+   | `content_understanding.endpoint.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/` |
+   | `content_understanding.project_id.value` | The Project ID you copied from AI Foundry in Task 2 |
+   | `chat_history.endpoint.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
+   | `blob_storage.account_url.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wusa0.blob.core.windows.net/` |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image12.png)
+   >**Understanding the config structure:** Values with `type: "secret"` (like `open-ai-key`, `ai-foundry-key`, `cosmosdb-connection-string`) are resolved from Key Vault at runtime — you do NOT paste actual keys here. Only the `value:` fields for endpoints need to be updated.
 
-1. Review the configuration structure:
+1. Save the file (**Ctrl+S**).
 
-   - **id** and **version** — Uniquely identify this extraction configuration.
-   - **collection_rows** — An array defining document types. Each row specifies a `data_type`, a `field_schema` (list of fields to extract), and an `analyzer_id` that maps to an Azure Content Understanding analyzer.
-   - **field_schema** — Each field has a `name`, `type` (string, integer, float, etc.), a human-readable `description`, and a `method` (`extract` for CU extraction or `generate` for LLM generation).
+1. For local development, you also need to sign in to Azure CLI so the application can authenticate to Key Vault and other services:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image13.png)
+   ```
+   az login
+   ```
 
-1. Expand the **document_samples** **(1)** folder. Notice the sample PDF — **Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf** **(2)**. This is the lease agreement document you will ingest and query in later exercises.
+   Follow the browser-based authentication flow. When prompted, use:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image14.png)
+   - **Email:** <inject key="AzureAdUserEmail"></inject>
+   - **Password:** <inject key="AzureAdUserPassword"></inject>
 
-   >**Note:** In a production scenario, hundreds or thousands of such documents would be ingested automatically via blob storage triggers.
+1. Set your active subscription:
+
+   ```
+   az account set --subscription "<inject key="Subscription ID" enableCopy="true" />"
+   ```
 
 ## Summary
 
-In this exercise, you have completed the following:
+In this lab, you:
 
-1. Verified all lab prerequisites by running the **Validate-LabSetup.ps1** script.
-2. Explored the **project repository structure** including `src/`, `iac/`, `configs/`, `docs/`, and `tests/` folders.
-3. Reviewed the **solution architecture** and three core workflows — Document Enquiry, Configuration Upload, and Document Ingestion.
-4. Explored **Azure Content Understanding** concepts, the ADR document, sample extraction configuration, and sample lease agreement PDF.
+1. Explored the pre-deployed Azure resources including Key Vault, Cosmos DB, Azure OpenAI, and AI Services.
+2. Navigated to Azure AI Foundry and found the Content Understanding project and project ID.
+3. Verified the gpt-4o model deployment in Azure OpenAI.
+4. Set up the Python virtual environment and installed dependencies.
+5. Configured the application with your Azure resource endpoints.
 
-### You have successfully completed this exercise. Click **Next >>** to proceed to the next exercise.
-
-© 2026 Microsoft Corporation. All rights reserved.
-
-By using this demo/lab, you agree to the following terms:
-
-The technology/functionality described in this demo/lab is provided by Microsoft Corporation for purposes of obtaining your feedback and to provide you with a learning experience. You may only use the demo/lab to evaluate such technology features and functionality and provide feedback to Microsoft. You may not use it for any other purpose. You may not modify, copy, distribute, transmit, display, perform, reproduce, publish, license, create derivative works from, transfer, or sell this demo/lab or any portion thereof.
-
-COPYING OR REPRODUCTION OF THE DEMO/LAB (OR ANY PORTION OF IT) TO ANY OTHER SERVER OR LOCATION FOR FURTHER REPRODUCTION OR REDISTRIBUTION IS EXPRESSLY PROHIBITED.
-
-THIS DEMO/LAB PROVIDES CERTAIN SOFTWARE TECHNOLOGY/PRODUCT FEATURES AND FUNCTIONALITY, INCLUDING POTENTIAL NEW FEATURES AND CONCEPTS, IN A SIMULATED ENVIRONMENT WITHOUT COMPLEX SET-UP OR INSTALLATION FOR THE PURPOSE DESCRIBED ABOVE. THE TECHNOLOGY/CONCEPTS REPRESENTED IN THIS DEMO/LAB MAY NOT REPRESENT FULL FEATURE FUNCTIONALITY AND MAY NOT WORK THE WAY A FINAL VERSION MAY WORK. WE ALSO MAY NOT RELEASE A FINAL VERSION OF SUCH FEATURES OR CONCEPTS. YOUR EXPERIENCE WITH USING SUCH FEATURES AND FUNCTIONALITY IN A PHYSICAL ENVIRONMENT MAY ALSO BE DIFFERENT.
+In the next lab, you will start the Function App locally and use Azure Content Understanding to extract structured data from documents.

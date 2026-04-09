@@ -3,29 +3,30 @@
   "Language": "English",
   "Files": [
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-01.md",
-      "FileName": "Exercise 1 - Environment Setup and Architecture Overview.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/gettingstarted.md",
+      "FileName": "Getting Started.md",
       "Order": 1
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-02.md",
-      "FileName": "Exercise 2 - Deploying Azure Infrastructure with Terraform.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-01.md",
+      "FileName": "Lab 01 - Explore Azure Resources and Configure Content Understanding.md",
       "Order": 2
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-03.md",
-      "FileName": "Exercise 3 - Configuring the Application.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-02.md",
+      "FileName": "Lab 02 - Extract Documents Using Azure Content Understanding.md",
       "Order": 3
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-04.md",
-      "FileName": "Exercise 4 - Document Extraction Configuration and Ingestion.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-03.md",
+      "FileName": "Lab 03 - Query Extracted Data with Azure OpenAI.md",
       "Order": 4
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-05.md",
-      "FileName": "Exercise 5 - Querying Documents and Deploying to Azure.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-04.md",
+      "FileName": "Lab 04 - Deploy to Azure and Monitor.md",
       "Order": 5
     }
   ]
+}
 }

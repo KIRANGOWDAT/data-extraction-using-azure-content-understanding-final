@@ -1,376 +1,178 @@
-# Exercise 4: Document Extraction Configuration and Ingestion
+# Lab 04: Deploy to Azure and Monitor
 
-### Estimated Duration: 75 Minutes
+### Estimated Duration: 45 Minutes
 
 ## Overview
 
-In this exercise, you will configure the document extraction pipeline and ingest your first document using Azure Content Understanding. You will upload a JSON configuration that defines the fields to extract from lease agreements, then process a sample PDF through the ingestion API. Finally, you will explore the extracted structured data — including fields, confidence scores, and bounding box coordinates — stored in Azure Cosmos DB, and verify the markdown representation in Azure Blob Storage.
+In this lab, you will deploy the document extraction Function App to Azure and test the deployed endpoints. You will configure the deployed application with the correct settings, run end-to-end tests against the cloud-hosted API, and monitor application performance using Application Insights.
 
 ## Objectives
 
-In this exercise, you will complete the following tasks:
+After completing this lab, you will have:
 
-- Task 1: Review the extraction configuration schema
-- Task 2: Upload the extraction configuration via API
-- Task 3: Verify the configuration in Cosmos DB
-- Task 4: Review the ingestion pipeline code
-- Task 5: Ingest a sample lease agreement document
-- Task 6: Verify extracted data in Cosmos DB
-- Task 7: Explore extracted fields, bounding boxes, and confidence scores
-- Task 8: Verify markdown storage in Azure Blob Storage
+- Deployed the Function App to Azure
+- Configured the deployed application settings
+- Tested all deployed endpoints (health, config, ingest, query)
+- Monitored the application with Application Insights live metrics
 
-### Task 1: Review the extraction configuration schema
+### Task 1: Deploy the Function App to Azure
 
-In this task, you will examine the extraction configuration JSON file and understand each component.
+In this task, you will deploy the Function App to Azure using Azure Functions Core Tools.
 
-1. Ensure the Azure Function App is running locally from Exercise 3. If not, open a terminal, activate the virtual environment, and start it:
-
-   ```
-   cd C:\LabFiles\data-extraction-using-azure-content-understanding
-   .venv\Scripts\activate
-   func start --script-root ./src/
-   ```
-
-1. In VS Code Explorer, expand the **configs** **(1)** folder and click on **document-extraction-v1.0.json** **(2)** to open it.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image02.png)
-
-1. Review the top-level structure of the configuration:
-
-   ```json
-   {
-       "id": "document-extraction-v1.0",
-       "name": "document-extraction",
-       "version": "v1.0",
-       "prompt": "You are a helpful assistant tasked with using the necessary tools to retrieve document information...",
-       "collection_rows": [...]
-   }
-   ```
-
-   - **id** — Unique identifier composed of `{name}-{version}`.
-   - **name** and **version** — Used to reference this configuration via the API.
-   - **prompt** — The system prompt sent to Azure OpenAI when users query the ingested data.
-   - **collection_rows** — Array of document type definitions, each with its own field schema and analyzer.
-
-1. Examine the **collection_rows** array. Each row defines a document type and its extraction fields:
-
-   ```json
-   {
-       "data_type": "LeaseAgreement",
-       "field_schema": [
-           {
-               "name": "license_grant_scope",
-               "type": "string",
-               "description": "Scope of license granted to the lessee or company",
-               "method": "extract"
-           },
-           ...
-       ],
-       "analyzer_id": "test-analyzer"
-   }
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image03.png)
-
-1. Understand each field property:
-
-   | Property | Description |
-   |---|---|
-   | **name** | Field name in the extracted output (e.g., `license_grant_scope`) |
-   | **type** | Data type: `string`, `integer`, `float`, `boolean`, `date`, `datetime`, `time`, `object`, or `array` |
-   | **description** | Human-readable description that helps Azure Content Understanding understand what to extract |
-   | **method** | `extract` (CU extracts from document) or `generate` (LLM generates the value) |
-   | **analyzer_id** | The Azure Content Understanding analyzer name created for this configuration |
-
-### Task 2: Upload the extraction configuration via API
-
-In this task, you will upload the configuration to the running Function App, which stores it in Cosmos DB and creates the corresponding Content Understanding analyzer.
-
-1. Open a **new terminal tab** (**Ctrl+Shift+`**) while keeping the Function App running.
-
-1. Activate the virtual environment in the new terminal:
+1. In VS Code, open a terminal and ensure you are in the project root with the virtual environment activated:
 
    ```
    cd C:\LabFiles\data-extraction-using-azure-content-understanding
    .venv\Scripts\activate
    ```
 
-1. Upload the extraction configuration using **curl**:
+1. Stop the locally running Function App by pressing **Ctrl+C** in the terminal running `func start`.
+
+1. Retrieve your **Function App name** from Azure. The Terraform deployment created a Function App with a random suffix, so the exact name varies per deployment:
 
    ```
-   curl.exe -X PUT "http://localhost:7071/api/configs/document-extraction/versions/v1.0" `
+   $funcApp = (az functionapp list --resource-group <inject key="AzureResourceGroup" enableCopy="false" /> --query "[0].name" -o tsv)
+   echo "Your Function App name is: $funcApp"
+   ```
+
+   >**Note:** The output should show a name like `devdataext<inject key="DeploymentID" enableCopy="false" />wufunc*****` where `*****` is a random 5-character suffix. You will use `$funcApp` in subsequent commands.
+
+1. Copy the **requirements.txt** file into the `src/` directory so the Azure Functions deployment can find it:
+
+   ```
+   Copy-Item requirements.txt src\
+   ```
+
+1. Deploy the Function App to Azure:
+
+   ```
+   func azure functionapp publish $funcApp --python --script-root ./src/
+   ```
+
+1. Wait for the deployment to complete (this may take a few minutes). You should see output ending with:
+
+   ```
+   Remote build succeeded!
+   ```
+
+### Task 2: Configure the deployed application
+
+In this task, you will update the application configuration for the deployed environment.
+
+1. Open **src/resources/app_config.yaml** in VS Code and scroll down to the `dev:` section (below the `local:` section). The deployed Function App reads the `dev:` section because the `ENVIRONMENT` variable defaults to `"dev"`.
+
+1. Update the `dev:` section with the same Azure resource endpoints you configured for the `local:` section in Lab 01:
+
+   | Setting | Value |
+   |---------|-------|
+   | `key_vault_uri` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/` |
+   | `tenant_id` | Your Azure tenant ID (same as `local:`) |
+   | `user_managed_identity.client_id` | Leave empty (`""`) — the deployed app uses **system-assigned managed identity** |
+   | `llm.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
+   | `content_understanding.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/` (same as `local:`) |
+   | `content_understanding.project_id` | Your AI Foundry project ID (same as `local:`) |
+   | `chat_history.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
+   | `blob_storage.account_url` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wusa0.blob.core.windows.net/` |
+
+   >**Tip:** The easiest approach is to copy all values from your `local:` section and paste them into the corresponding `dev:` fields. The **secret references** (like `cosmosdb-connection-string`, `open-ai-key`, `ai-foundry-key`) do **not** need to change — they point to the same Key Vault secrets.
+
+1. Save the file and **redeploy** the Function App so the updated config is included:
+
+   ```
+   Copy-Item requirements.txt src\
+   func azure functionapp publish $funcApp --python --script-root ./src/
+   ```
+
+   Wait for the deployment to complete before testing.
+
+### Task 3: Test the deployed endpoints
+
+In this task, you will test all the deployed API endpoints to verify the full extraction pipeline works in Azure.
+
+1. Test the **health check** on the deployed endpoint:
+
+   ```
+   curl.exe https://$funcApp.azurewebsites.net/api/v1/health
+   ```
+
+1. Verify all services show as **healthy**. The deployed Function App uses its **system-assigned managed identity** for authentication to Azure services instead of user credentials.
+
+1. Upload the extraction configuration to the **deployed** endpoint:
+
+   ```
+   curl.exe -X PUT "https://$funcApp.azurewebsites.net/api/configs/document-extraction/versions/v1.0" `
      -H "Content-Type: application/json" `
      -d @configs/document-extraction-v1.0.json
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image04.png)
-
-1. You should see a **"Configuration uploaded successfully."** message confirming the upload.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image05.png)
-
-1. Alternatively, use the **REST Client** extension. Open the file **src/samples/config_update_sample.http** **(1)** and click **Send Request** **(2)** on the local PUT request line.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image06.png)
-
-1. Behind the scenes, the upload process performs these actions:
-
-   1. **Validates** the JSON configuration against the expected Pydantic schema.
-   1. **Creates an Azure Content Understanding analyzer** by calling the `begin_create_analyzer()` API with a template built from the field schema.
-   1. **Computes a SHA-256 hash** of the extraction configuration for versioning and deduplication.
-   1. **Upserts** the configuration document to the Cosmos DB "Configurations" collection.
-
-1. Verify the configuration was stored by retrieving it:
+1. Ingest the document to the **deployed** endpoint:
 
    ```
-   curl.exe http://localhost:7071/api/configs/document-extraction/versions/v1.0
-   ```
-
-   You should see the full configuration JSON returned, including the computed `extraction_config_hash`.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image07.png)
-
-### Task 3: Verify the configuration in Cosmos DB
-
-In this task, you will navigate to Cosmos DB in the Azure Portal and inspect the stored configuration document.
-
-1. Open the **Azure Portal** and navigate to your Cosmos DB (Mongo API) account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
-
-1. Open **Data Explorer** **(1)** from the left menu.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image08.png)
-
-1. Expand the **data-extraction-db** **(1)** database and click on the **Configurations** **(2)** collection.
-
-1. Click on **Documents** **(1)** to view the stored configuration document. You should see a document with `_id: "document-extraction-v1.0"`.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image09.png)
-
-1. Expand the document and review the stored fields:
-
-   - **name** — `document-extraction`
-   - **version** — `v1.0`
-   - **prompt** — The system prompt for Azure OpenAI
-   - **collection_rows** — Complete field schemas and analyzer ID
-   - **lease_config_hash** — The SHA-256 hash of the extraction configuration
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image10.png)
-
-   >**Note:** The `lease_config_hash` is a critical component. When documents are ingested, they are associated with this hash. If the extraction configuration changes, a new hash is generated, and documents need to be re-ingested to ensure consistency.
-
-### Task 4: Review the ingestion pipeline code
-
-In this task, you will trace the code path for document ingestion to understand how the system processes documents.
-
-1. In VS Code, open the file **src/routes/api/v1/ingest_documents_routes.py** **(1)**. This defines the HTTP trigger for document ingestion:
-
-   ```
-   POST /api/ingest-documents/{collection_id}/{lease_id}/{document_name}
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image11.png)
-
-1. Open **src/controllers/ingest_lease_documents_controller.py** **(1)**. Review the `ingest_documents()` method, which performs these steps:
-
-   1. Loads the extraction configuration from Cosmos DB.
-   1. Checks if the document has already been ingested (deduplication by collection ID + lease ID + filename + config hash).
-   1. Sends the PDF binary to Azure Content Understanding via `begin_analyze_data()`.
-   1. Polls the CU operation until completion via `poll_result()`.
-   1. Calls the ingestion service to process and store the results.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image12.png)
-
-1. Open **src/services/azure_content_understanding_client.py** **(1)**. Review the key methods:
-
-   - `begin_analyze_data(analyzer_id, file_bytes)` — Sends the PDF binary to the CU analyzer and returns an operation URL.
-   - `poll_result(operation_url)` — Polls the operation URL until the status is "succeeded" or "failed".
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image13.png)
-
-1. Open **src/services/ingest_lease_documents_service.py** **(1)**. Review `ingest_analyzer_output()` which:
-
-   1. Acquires a distributed MongoDB lock on the document.
-   1. Gets or creates the collection document in Cosmos DB (keyed by `{collection_id}-{config_hash}`).
-   1. Gets or creates the lease entry within the collection.
-   1. Uploads the markdown representation to Azure Blob Storage.
-   1. Extracts fields with bounding boxes, confidence scores, and source pages.
-   1. Upserts the complete document to the Cosmos DB "Documents" collection.
-   1. Releases the lock.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image14.png)
-
-### Task 5: Ingest a sample lease agreement document
-
-In this task, you will send the sample lease agreement PDF to the ingestion endpoint and observe the extraction process.
-
-1. In the terminal, run the following **curl** command to ingest the sample lease agreement:
-
-   ```
-   curl.exe -X POST "http://localhost:7071/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
      -H "Content-Type: application/octet-stream" `
      --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image15.png)
+1. Query the deployed endpoint:
 
-   >**Note:** The **first time** you run this command, the Function App may restart automatically because the ingestion process creates an `analyzer_cache` folder, which triggers the file watcher. If the command hangs with no response, press **Ctrl+C** to cancel it and **run the same command again**. The second attempt will succeed because the folder already exists.
-
-1. Switch to the terminal tab running the Function App. Observe the log output showing the ingestion process:
-
-   - Configuration loaded from Cosmos DB
-   - Document sent to Azure Content Understanding
-   - Polling for extraction completion
-   - Fields extracted with confidence scores
-   - Data stored in Cosmos DB
-   - Markdown uploaded to Blob Storage
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image16.png)
-
-1. Wait for the response. A successful ingestion returns a **200 OK** status.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image17.png)
-
-1. Alternatively, use the **REST Client** extension. Open **src/samples/ingest_doc_sample.http** **(1)** and click **Send Request** **(2)** on the local POST request.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image18.png)
-
-   >**Note:** The first ingestion call may take **30–60 seconds** as Azure Content Understanding processes the document. Subsequent calls for already-ingested documents return immediately due to the deduplication check.
-
-### Task 6: Verify extracted data in Cosmos DB
-
-In this task, you will inspect the extracted document data stored in Cosmos DB.
-
-1. Navigate to the **Azure Portal** and open your Cosmos DB (Mongo API) account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
-
-1. Open **Data Explorer** **(1)** and expand the **data-extraction-db** **(2)** database.
-
-1. Click on the **Documents** **(1)** collection. You should see a new document with an ID following the pattern `Collection1-{config_hash}`.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image19.png)
-
-1. Click on the document to expand it. Review the structure:
-
-   ```json
-   {
-     "_id": "Collection1-{hash}",
-     "config_id": "document-extraction-v1.0",
-     "lease_config_hash": "{hash}",
-     "information": {
-       "entities": [
-         {
-           "name": "Lease1",
-           "original_documents": ["MicrosoftLeaseAgreement"],
-           "markdowns": ["Collections/Collection1/Lease1/MicrosoftLeaseAgreement.md"],
-           "fields": {
-             "license_grant_scope": [...],
-             "lease_duration": [...],
-             "termination_conditions": [...],
-             "compliance_audit_terms": [...],
-             "prohibited_uses": [...]
-           }
-         }
-       ]
-     }
-   }
+   ```
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" `
+     -H "Content-Type: application/json" `
+     -H "x-user: labuser@contoso.com" `
+     -d "{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"Summarize all key terms in Collection1.\"}"
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image20.png)
+1. Verify that the response includes the answer with citations, confirming the full pipeline works end-to-end in Azure.
 
-### Task 7: Explore extracted fields, bounding boxes, and confidence scores
+### Task 4: Monitor with Application Insights
 
-In this task, you will examine the individual extracted field values and their metadata.
+In this task, you will use Application Insights to monitor the deployed Function App's performance.
 
-1. In the Cosmos DB Data Explorer, expand the **fields** **(1)** object within the lease entity.
+1. In the Azure Portal, navigate to your **Function App** (the name you captured in the `$funcApp` variable). In the left menu, click **Settings** > **Application Insights**, then click the **Application Insights resource name** link to open the connected App Insights instance.
 
-1. Click on **license_grant_scope** **(1)** to see the extracted value. Each field contains:
+   >**Note:** The Function App has its own Application Insights resource (auto-created during Terraform deployment). Make sure you open the one linked to the Function App.
 
-   ```json
-   {
-     "type": "string",
-     "valueString": "The license grants the right to use Microsoft software products...",
-     "spans": [{ "offset": 1234, "length": 156 }],
-     "confidence": 0.932,
-     "source": "D(3,1.2567,4.5678,6.7890,4.5678,6.7890,5.1234,1.2567,5.1234)",
-     "document": "MicrosoftLeaseAgreement",
-     "markdown": "Collections/Collection1/Lease1/MicrosoftLeaseAgreement.md"
-   }
+1. Once in the Application Insights resource, click on **Investigate** > **Live Metrics** in the left menu to see real-time request rates, response times, and failures.
+
+1. While Live Metrics is open, send another query to the deployed endpoint from your terminal:
+
+   ```
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" `
+     -H "Content-Type: application/json" `
+     -H "x-user: labuser@contoso.com" `
+     -d "{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"What are the prohibited uses?\"}"
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image21.png)
+1. Observe the Live Metrics dashboard update in real-time — you should see the incoming request, the response time, and the dependency calls to Cosmos DB and Azure OpenAI.
 
-1. Understand each metadata field:
+1. Navigate to **Investigate** > **Transaction search** in the left menu. Click **See all data in the last 24 hours** to view the recent requests.
 
-   | Field | Description |
-   |---|---|
-   | **valueString** | Actual extracted text value from the document |
-   | **spans** | Character offset and length in the document's markdown representation |
-   | **confidence** | Score between 0 and 1 indicating extraction reliability (above 0.9 is highly reliable) |
-   | **source** | Bounding box coordinates `D(page, x1, y1, x2, y2, ...)` — exact location in the original PDF |
-   | **document** | Source document filename |
-   | **markdown** | Blob storage path to the document's markdown representation |
+1. Click on one of the query requests to open the **end-to-end transaction details**. This view shows the complete request lifecycle:
 
-1. Review the remaining extracted fields:
+   - The initial HTTP request to the Function App
+   - Dependency calls to Cosmos DB (retrieve config, get extracted data, store chat history)
+   - Dependency calls to Azure OpenAI (LLM inference)
+   - Response time breakdown for each component
 
-   - **lease_duration** — Duration of the lease agreement
-   - **termination_conditions** — Conditions under which the agreement can be terminated
-   - **compliance_audit_terms** — Audit rights and compliance verification terms
-   - **prohibited_uses** — Restrictions and forbidden activities
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image22.png)
-
-1. Compare the confidence scores across fields. Fields with clear, unambiguous language typically have higher scores (above 0.9), while fields requiring interpretation may have lower scores.
-
-### Task 8: Verify markdown storage in Azure Blob Storage
-
-In this task, you will verify that the document's markdown representation was uploaded to Azure Blob Storage.
-
-1. In the Azure Portal, navigate to your **Storage Account** **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`).
-
-1. Open **Containers** **(1)** from the left menu and click on the **processed** **(2)** container.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image23.png)
-
-1. Navigate through the folder hierarchy: **Collections** **(1)** → **Collection1** **(2)** → **Lease1** **(3)**.
-
-1. You should see the markdown file **MicrosoftLeaseAgreement.md** **(1)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image24.png)
-
-1. Click on the markdown file and select **Edit** **(1)** to preview its contents. This is the full-text markdown representation of the PDF document generated by Azure Content Understanding.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image25.png)
-
-   >**Note:** The markdown representation preserves the text content while being more machine-readable than the original PDF. The bounding box coordinates in each extracted field reference specific positions in the original PDF for precise traceability.
+   >**Why is this useful?** Application Insights lets you identify bottlenecks in the extraction pipeline. If Content Understanding extraction is slow, you'll see it in the dependency timing. If the LLM response takes too long, you can identify that separately. This is critical for production monitoring.
 
 ## Summary
 
-In this exercise, you have completed the following:
+In this lab, you:
 
-1. Reviewed the **extraction configuration schema** and understood field definitions, types, and methods.
-2. Uploaded the **extraction configuration** via the API, which created an Azure Content Understanding analyzer.
-3. Verified the **configuration document** stored in Cosmos DB with its SHA-256 hash.
-4. Traced the **ingestion pipeline code** across routes, controllers, services, and the CU client.
-5. Ingested a **sample lease agreement PDF** through the REST API.
-6. Verified the **extracted structured data** in Cosmos DB (collection and lease entities).
-7. Explored **extracted fields** with confidence scores, bounding boxes, and source document references.
-8. Confirmed the **markdown representation** was uploaded to Azure Blob Storage.
+1. Deployed the Function App to Azure using Azure Functions Core Tools.
+2. Configured the deployed application with the correct Azure resource endpoints.
+3. Tested all deployed endpoints — health check, config upload, document ingestion, and natural language query.
+4. Monitored the application with Application Insights live metrics and transaction search, understanding the end-to-end request lifecycle.
 
-### You have successfully completed this exercise. Click **Next >>** to proceed to the next exercise.
+## Congratulations!
 
-© 2026 Microsoft Corporation. All rights reserved.
+You have completed all labs in the **Data Extraction Using Azure Content Understanding** workshop. You have successfully:
 
-By using this demo/lab, you agree to the following terms:
+- Explored Azure AI Content Understanding and Azure AI Foundry
+- Configured a document extraction pipeline with custom field schemas
+- Extracted structured data from a lease agreement using Content Understanding analyzers
+- Queried the extracted data using natural language powered by Azure OpenAI and Semantic Kernel
+- Deployed the solution to Azure and monitored it with Application Insights
 
-The technology/functionality described in this demo/lab is provided by Microsoft Corporation for purposes of obtaining your feedback and to provide you with a learning experience. You may only use the demo/lab to evaluate such technology features and functionality and provide feedback to Microsoft. You may not use it for any other purpose. You may not modify, copy, distribute, transmit, display, perform, reproduce, publish, license, create derivative works from, transfer, or sell this demo/lab or any portion thereof.
-
-COPYING OR REPRODUCTION OF THE DEMO/LAB (OR ANY PORTION OF IT) TO ANY OTHER SERVER OR LOCATION FOR FURTHER REPRODUCTION OR REDISTRIBUTION IS EXPRESSLY PROHIBITED.
-
-THIS DEMO/LAB PROVIDES CERTAIN SOFTWARE TECHNOLOGY/PRODUCT FEATURES AND FUNCTIONALITY, INCLUDING POTENTIAL NEW FEATURES AND CONCEPTS, IN A SIMULATED ENVIRONMENT WITHOUT COMPLEX SET-UP OR INSTALLATION FOR THE PURPOSE DESCRIBED ABOVE. THE TECHNOLOGY/CONCEPTS REPRESENTED IN THIS DEMO/LAB MAY NOT REPRESENT FULL FEATURE FUNCTIONALITY AND MAY NOT WORK THE WAY A FINAL VERSION MAY WORK. WE ALSO MAY NOT RELEASE A FINAL VERSION OF SUCH FEATURES OR CONCEPTS. YOUR EXPERIENCE WITH USING SUCH FEATURES AND FUNCTIONALITY IN A PHYSICAL ENVIRONMENT MAY ALSO BE DIFFERENT.
-
-**FEEDBACK**. If you give feedback about the technology features, functionality and/or concepts described in this demo/lab to Microsoft, you give to Microsoft, without charge, the right to use, share and commercialize your feedback in any way and for any purpose. You also give to third parties, without charge, any patent rights needed for their products, technologies and services to use or interface with any specific parts of a Microsoft software or service that includes the feedback. You will not give feedback that is subject to a license that requires Microsoft to license its software or documentation to third parties because we include your feedback in them. These rights survive this agreement.
-
-MICROSOFT CORPORATION HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS WITH REGARD TO THE DEMO/LAB, INCLUDING ALL WARRANTIES AND CONDITIONS OF MERCHANTABILITY, WHETHER EXPRESS, IMPLIED OR STATUTORY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. MICROSOFT DOES NOT MAKE ANY ASSURANCES OR REPRESENTATIONS WITH REGARD TO THE ACCURACY OF THE RESULTS, OUTPUT THAT DERIVES FROM USE OF DEMO/ LAB, OR SUITABILITY OF THE INFORMATION CONTAINED IN THE DEMO/LAB FOR ANY PURPOSE.
-
-**DISCLAIMER**
-
-This demo/lab contains only a portion of new features and enhancements in Microsoft Azure. Some of the features might change in future releases of the product. In this demo/lab, you will learn about some of the new features but not all of the new features.
+These skills enable you to build intelligent document processing solutions that automatically extract, store, and query structured information from unstructured documents at scale.

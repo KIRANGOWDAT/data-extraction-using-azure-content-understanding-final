@@ -1,399 +1,153 @@
-# Exercise 3: Configuring the Application
+﻿# Lab 03: Query Extracted Data with Azure OpenAI
 
-### Estimated Duration: 60 Minutes
+### Estimated Duration: 45 Minutes
 
 ## Overview
 
-In this exercise, you will configure the document extraction application to connect to the Azure services deployed in Exercise 2. This involves setting up local Azure Functions settings, updating the application configuration YAML with your specific resource endpoints and Key Vault secret references, installing Python dependencies, and starting the Function App locally. By the end of this exercise, all five backend services will be healthy and the API endpoints ready for use.
+In this lab, you will query the extracted document data using natural language. The application uses **Azure OpenAI (gpt-4o)** with **Semantic Kernel** to understand your questions, retrieve the relevant extracted fields from Cosmos DB, and generate intelligent responses with citations. You will also explore multi-turn conversations and examine the chat history stored in Cosmos DB.
 
 ## Objectives
 
-In this exercise, you will complete the following tasks:
+After completing this lab, you will have:
 
-- Task 1: Configure local settings for Azure Functions
-- Task 2: Update app_config.yaml with Azure service endpoints
-- Task 3: Retrieve secrets and endpoints from deployed resources
-- Task 4: Set up the Python virtual environment and install dependencies
-- Task 5: Start the Azure Function App locally
-- Task 6: Verify the health check endpoint
+- Queried extracted document data using natural language
+- Explored multi-turn conversations with contextual follow-ups
+- Examined chat history stored in Cosmos DB (SQL API)
+- Understood how Semantic Kernel orchestrates the query pipeline
 
-### Task 1: Configure local settings for Azure Functions
+### Task 1: Query extraction results using natural language
 
-In this task, you will create the local Azure Functions settings file that defines runtime environment variables.
+In this task, you will use the query endpoint to ask questions about the data extracted from the lease agreement in Lab 02.
 
-1. In VS Code, open the integrated terminal (**Ctrl+`**) and navigate to the **src** directory:
-
-   ```
-   cd C:\LabFiles\data-extraction-using-azure-content-understanding\src
-   ```
-
-1. Copy the sample settings file to create your local configuration:
-
-   ```
-   copy local.settings.sample.json local.settings.json
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image02.png)
-
-1. Open **local.settings.json** **(1)** in the VS Code Explorer. Review the contents:
-
-   ```json
-   {
-     "IsEncrypted": false,
-     "Values": {
-       "FUNCTIONS_WORKER_RUNTIME": "python",
-       "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-       "PYTHON_ENABLE_DEBUG_LOGGING": "1",
-       "ENVIRONMENT": "local",
-       "FUNCTIONS_EXTENSION_VERSION": "~4",
-       "WEBSITE_NODE_DEFAULT_VERSION": "~18"
-     }
-   }
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image03.png)
-
-1. Notice the key settings:
-
-   - **FUNCTIONS_WORKER_RUNTIME** — Set to `python` for the Python Azure Functions runtime.
-   - **AzureWebJobsStorage** — Set to `UseDevelopmentStorage=true` for local development (uses the Azurite storage emulator).
-   - **ENVIRONMENT** — Set to `local` which tells the application to load the `local:` section from `app_config.yaml`.
-   - **FUNCTIONS_EXTENSION_VERSION** — Uses Azure Functions v4 runtime.
-
-1. Navigate to the **Azure Portal**, open your **Storage Account** **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`), go to **Access keys** **(2)**, and copy the **Connection string** **(3)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image04.png)
-
-1. Replace the `UseDevelopmentStorage=true` value in **local.settings.json** with the copied connection string:
-
-   ```json
-   {
-     "IsEncrypted": false,
-     "Values": {
-       "FUNCTIONS_WORKER_RUNTIME": "python",
-       "AzureWebJobsStorage": "<your-storage-connection-string>",
-       "PYTHON_ENABLE_DEBUG_LOGGING": "1",
-       "ENVIRONMENT": "local",
-       "FUNCTIONS_EXTENSION_VERSION": "~4",
-       "WEBSITE_NODE_DEFAULT_VERSION": "~18"
-     }
-   }
-   ```
-
-1. **Save** the file (**Ctrl+S**).
-
-   >**Note:** The `local.settings.json` file is excluded from version control via `.gitignore` as it contains sensitive connection strings. Never commit this file to a repository.
-
-### Task 2: Update app_config.yaml with Azure service endpoints
-
-In this task, you will update the application configuration file with the actual endpoints and Key Vault secret references for your deployed Azure resources.
-
-1. In VS Code Explorer, navigate to **src** > **resources** **(1)** and click on **app_config.yaml** **(2)** to open it.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image05.png)
-
-1. The file has a `local:` section at the top that corresponds to the `ENVIRONMENT=local` setting. It contains configuration for:
-
-   - **key_vault_uri** — Azure Key Vault endpoint (for resolving secrets)
-   - **cosmosdb** — Database name, connection string (from Key Vault), collection names
-   - **llm** — Azure OpenAI model name, endpoint, API key (from Key Vault)
-   - **content_understanding** — CU endpoint, subscription key (from Key Vault), timeout, project ID
-   - **chat_history** — Cosmos DB SQL API endpoint, database and container names
-   - **blob_storage** — Storage account URL and container name
-
-1. Start with the **Key Vault URI**. In the Azure Portal, open your Key Vault **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0`), go to **Overview** **(2)**, and copy the **Vault URI** **(3)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image06.png)
-
-1. Update the `key_vault_uri` value in the `local:` section:
-
-   ```yaml
-   local:
-     key_vault_uri: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/"
-   ```
-
-1. Retrieve the **tenant_id** by running the following command in the terminal:
-
-   ```
-   az account show --query tenantId -o tsv
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image07.png)
-
-1. Update the `tenant_id` value in the `local:` section with the copied tenant ID.
-
-### Task 3: Retrieve secrets and endpoints from deployed resources
-
-In this task, you will gather all remaining endpoints and configuration values from your deployed Azure resources to complete the app_config.yaml file.
-
-1. Get the **Azure OpenAI endpoint**. In the Azure Portal, navigate to your Azure OpenAI resource **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** URL **(3)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image08.png)
-
-1. Update the `llm` section in **app_config.yaml**:
-
-   ```yaml
-   llm:
-     model_name:
-       value: "gpt-4o"
-     endpoint:
-       value: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o"
-     access_key:
-       key: "open-ai-key"
-       type: "secret"
-     api_version:
-       value: "2025-04-01-preview"
-   ```
-
-   >**Note:** The `access_key` field uses `type: "secret"` which means the application resolves the value from Azure Key Vault using the key name `open-ai-key`. The Terraform deployment automatically stored this secret in Key Vault.
-
-1. Get the **Content Understanding endpoint**. In the Azure Portal, navigate to your AI Services resource **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wuais0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** **(3)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image09.png)
-
-1. Get the **AI Foundry Project ID**. Navigate to the **AI Foundry project** **(1)** in the Azure Portal. The project ID can be found in the project overview or properties.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image10.png)
-
-1. Update the `content_understanding` section:
-
-   ```yaml
-   content_understanding:
-     endpoint:
-       value: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/"
-     subscription_key:
-       key: "ai-foundry-key"
-       type: "secret"
-     request_timeout:
-       value: 30
-     project_id:
-       value: "<your-ai-project-id>"
-   ```
-
-1. Get the **Cosmos DB SQL API endpoint** for chat history. Navigate to your Cosmos DB SQL API account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`) and copy the **URI** **(2)** from the overview page.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image11.png)
-
-1. Update the `chat_history` section:
-
-   ```yaml
-   chat_history:
-     endpoint:
-       value: "https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/"
-     db_name:
-       value: "knowledge-base-db"
-     chat_history_container_name:
-       value: "chat-history"
-     user_message_limit:
-       value: 20
-     domain:
-       value: "Data Extraction AI"
-   ```
-
-1. Get the **Storage Account URL**. Navigate to your Storage Account **(1)** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`) and copy the **Blob service endpoint** **(2)** from the overview page.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image12.png)
-
-1. Update the `blob_storage` section with the Blob service endpoint you just copied:
-
-   ```yaml
-   blob_storage:
-     account_url:
-       value: "https://<your-storage-account-name>.blob.core.windows.net/"
-     container_name:
-       value: "processed"
-   ```
-
-1. **Save** the file (**Ctrl+S**). Your `local:` section should now have all real values for Key Vault URI, tenant ID, OpenAI endpoint, Content Understanding endpoint, Cosmos DB endpoints, and Storage Account URL.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image13.png)
-
-   >**Note:** Secret values (Cosmos DB connection string, OpenAI API key, AI Services subscription key) are NOT stored directly in this file. They are referenced by Key Vault secret names (e.g., `key: "cosmosdb-connection-string"`, `type: "secret"`). The application resolves them at runtime using the Key Vault URI. This is a security best practice.
-
-### Task 4: Set up the Python virtual environment and install dependencies
-
-In this task, you will create a Python virtual environment and install all required packages.
-
-1. In the terminal, navigate to the **project root** directory:
+1. Ensure the Function App is still running in your first terminal. If not, start it again:
 
    ```
    cd C:\LabFiles\data-extraction-using-azure-content-understanding
-   ```
-
-1. Create a Python virtual environment:
-
-   ```
-   python -m venv .venv
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image14.png)
-
-1. Activate the virtual environment:
-
-   ```
    .venv\Scripts\activate
+   func start
    ```
 
-   You should see `(.venv)` appear at the beginning of your terminal prompt.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image15.png)
-
-1. Install the project dependencies:
+1. In your second terminal, send a query about the extracted lease data:
 
    ```
-   pip install -r requirements.txt
+   curl.exe -X POST "http://localhost:7071/api/v1/query" `
+     -H "Content-Type: application/json" `
+     -H "x-user: labuser@contoso.com" `
+     -d "{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What is the scope of the license grant in Collection1?\"}"
    ```
 
-   This installs all required packages including:
+   >**Understanding the request parameters:**
+   > - `cid` (Collection ID) — Identifies which collection to query. Must match the collection you ingested in Lab 02 (`Collection1`).
+   > - `sid` (Session ID) — Groups messages into a conversation thread for multi-turn chat.
+   > - `query` — Your natural language question.
+   > - `x-user` header — Identifies the user for chat history tracking.
 
-   | Package | Purpose |
-   |---|---|
-   | `azure-functions` | Azure Functions SDK |
-   | `azure-keyvault-secrets` | Key Vault secret client |
-   | `azure-storage-blob` | Blob storage client |
-   | `azure-identity` | Azure authentication (DefaultAzureCredential) |
-   | `semantic-kernel` | Microsoft Semantic Kernel for LLM orchestration |
-   | `pymongo` | MongoDB driver for Cosmos DB (Mongo API) |
-   | `pyyaml` | YAML configuration parser |
-   | `requests` | HTTP client for Content Understanding API |
-   | `cachetools` | TTL caching for health checks and collection data |
+1. Review the response. It should contain:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image16.png)
+   - **`response`** — The LLM-generated answer about the license grant scope, based on the extracted data
+   - **`citations`** — References to the specific extracted fields that were used, including document names and field locations
 
-1. Wait for the installation to complete. You should see **"Successfully installed"** followed by a list of all installed packages.
+   >**How does this work?** The application uses Semantic Kernel with `FunctionChoiceBehavior.Required()`, which forces the LLM to call the `get_collection_data()` plugin function. This function retrieves all extracted fields for the specified collection from Cosmos DB. The LLM then uses this structured data as context to formulate its response — it never makes up information; it only references what was actually extracted.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image17.png)
-
-1. Verify VS Code is configured to use the virtual environment. Open **.vscode/settings.json** **(1)** and confirm the following setting exists:
-
-   ```json
-   {
-     "azureFunctions.pythonVenv": ".venv"
-   }
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image18.png)
-
-### Task 5: Start the Azure Function App locally
-
-In this task, you will start the Azure Functions application locally and verify it runs without errors.
-
-1. Ensure your virtual environment is activated (you should see `(.venv)` in the terminal prompt).
-
-1. Start the Azure Function App using Azure Functions Core Tools:
+1. Try another query about a different extracted field:
 
    ```
-   func start --script-root ./src/
+   curl.exe -X POST "http://localhost:7071/api/v1/query" `
+     -H "Content-Type: application/json" `
+     -H "x-user: labuser@contoso.com" `
+     -d "{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What are the termination conditions?\"}"
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image19.png)
+1. Review the response. Notice that the LLM provides specific termination conditions extracted from the document, with references back to the source.
 
-1. Wait for the Function App to initialize. You should see output showing that the following HTTP trigger functions have been registered:
+### Task 2: Explore multi-turn conversations
 
-   ```
-   Functions:
+In this task, you will explore how the system maintains conversation context across multiple queries using chat history.
 
-       health_check:      [GET] http://localhost:7071/api/v1/health
-       startup_check:     [GET] http://localhost:7071/api/v1/startup
-       put_config:        [PUT] http://localhost:7071/api/configs/{name}/versions/{version}
-       get_config:        [GET] http://localhost:7071/api/configs/{name}/versions/{version}
-       get_default_config:[GET] http://localhost:7071/api/configs/default
-       query:             [POST] http://localhost:7071/api/v1/query
-       ingest_documents:  [POST] http://localhost:7071/api/ingest-documents/{collection_id}/{lease_id}/{document_name}
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image20.png)
-
-   >**Note:** If you see errors related to Key Vault authentication, ensure you are logged in to Azure CLI (`az login`) in the same terminal session. The application uses `DefaultAzureCredential` which falls back to Azure CLI credentials for local development.
-
-1. Keep the terminal running — the Function App must remain active for the next task.
-
-### Task 6: Verify the health check endpoint
-
-In this task, you will test the health check endpoint to verify that the application can connect to all backend services.
-
-1. Open a **new terminal tab** (**Ctrl+Shift+`**) in VS Code while keeping the Function App running in the first tab.
-
-1. Test the **startup liveness probe**:
+1. Send a follow-up query using the **same session ID** (`session1`):
 
    ```
-   curl.exe http://localhost:7071/api/v1/startup
+   curl.exe -X POST "http://localhost:7071/api/v1/query" `
+     -H "Content-Type: application/json" `
+     -H "x-user: labuser@contoso.com" `
+     -d "{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What about compliance audit terms?\"}"
    ```
 
-   You should receive a simple **200 OK** response confirming the Function App is running.
+1. Notice that the response builds on the context from previous questions. Because the session ID is the same, the LLM has access to the conversation history and can provide more contextual answers.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image21.png)
-
-1. Test the **full health check** that verifies connectivity to all backend services:
+1. Now start a **new session** with a different session ID to see a fresh conversation:
 
    ```
-   curl.exe http://localhost:7071/api/v1/health
+   curl.exe -X POST "http://localhost:7071/api/v1/query" `
+     -H "Content-Type: application/json" `
+     -H "x-user: labuser@contoso.com" `
+     -d "{\"cid\": \"Collection1\", \"sid\": \"session2\", \"query\": \"Summarize all key terms in Collection1.\"}"
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image22.png)
+1. This response should be independent of the previous conversation since it uses a different session ID. The LLM retrieves all extracted fields and provides a comprehensive summary.
 
-1. Review the health check response. When all services are healthy, you will see:
+   >**Multi-turn architecture:** Chat history is stored in the **Cosmos DB SQL API** (separate from the MongoDB API used for documents). Each message includes the user query, assistant response, session ID, and user identifier. The system limits chat history to the 20 most recent messages per session to keep the LLM context manageable.
 
-   ```json
-   {
-     "status": "healthy",
-     "checks": {
-       "mongo_db":               { "status": "healthy" },
-       "cosmos_db":              { "status": "healthy" },
-       "key_vault":              { "status": "healthy" },
-       "content_understanding":  { "status": "healthy" },
-       "azure_openai":           { "status": "healthy" }
-     }
-   }
-   ```
+### Task 3: Examine chat history in Cosmos DB
 
-1. Verify that all five services show **"status": "healthy"**:
+In this task, you will examine the conversation history stored in Cosmos DB SQL API.
 
-   | Service | Backend |
-   |---|---|
-   | **mongo_db** | Cosmos DB (Mongo API) connectivity |
-   | **cosmos_db** | Cosmos DB (SQL API) for chat history |
-   | **key_vault** | Azure Key Vault secret resolution |
-   | **content_understanding** | Azure Content Understanding API |
-   | **azure_openai** | Azure OpenAI gpt-4o model |
+1. In the Azure Portal, navigate to your **Cosmos DB SQL API account** (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`).
 
-   >**Note:** If any service shows "unhealthy", double-check the corresponding endpoint and secret name in `app_config.yaml`. Health check results are cached for 300 seconds (5 minutes), so wait after making configuration changes before re-testing.
+1. Open **Data Explorer**. Expand **knowledge-base-db** > **chat-history** and browse the stored documents.
 
-1. Alternatively, you can use the pre-installed **REST Client** extension to test APIs directly from VS Code. Open the file **src/samples/health_check_sample.http** **(1)**. You will see a clickable **Send Request** link above each `###` separator. Click **Send Request** **(2)** on the **local health check** line (line 13).
+1. You should see conversation entries for your sessions. Each document contains:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image23.png)
+   | Field | Description |
+   |-------|-------------|
+   | `id` | Unique message identifier |
+   | `session_id` | Groups messages into a conversation (`session1`, `session2`) |
+   | `user_id` | The user identifier from the `x-user` header |
+   | `role` | Either `user` (your query) or `assistant` (LLM response) |
+   | `content` | The actual message text |
+   | `timestamp` | When the message was created |
 
-1. The REST Client displays the response inline in VS Code, which is convenient for testing APIs throughout the remaining exercises.
+1. Compare `session1` (which has multiple messages showing conversation context) with `session2` (which has a single exchange). This demonstrates how session-based chat history enables multi-turn conversations.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image24.png)
+   >**Why separate Cosmos DB accounts?** The MongoDB API account stores extraction configurations and extracted document data — its flexible schema handles nested field arrays, bounding boxes, and confidence scores. The SQL API account stores chat history — simple key-value lookups by session ID with a partition key of `/id` for efficient retrieval.
+
+### Task 4: Understand the Semantic Kernel orchestration
+
+In this task, you will examine the code to understand how Semantic Kernel orchestrates the query pipeline.
+
+1. In VS Code, open **src/controllers/inference_controller.py**.
+
+1. Notice the key section where Semantic Kernel is configured:
+
+   - A `CollectionPlugin` is created that exposes a `get_collection_data()` function. This function queries Cosmos DB for all extracted fields in the specified collection.
+   - The plugin is added to the Semantic Kernel instance.
+   - `FunctionChoiceBehavior.Required()` is set, which **forces** the LLM to call the plugin function on every request — the LLM cannot respond without first retrieving data from Cosmos DB.
+
+   >**Why forced tool calling?** Without `Required()`, the LLM might try to answer from its training data instead of the extracted documents. By forcing tool usage, every response is grounded in actual extracted data from Content Understanding.
+
+1. Open **src/controllers/ingest_lease_documents_controller.py** and review how the ingestion pipeline:
+
+   - Loads the extraction config from Cosmos DB
+   - Calls Content Understanding's analyzer via `begin_analyze_data()` with the raw PDF bytes
+   - Polls for the result using `poll_result()` (Content Understanding is a long-running async operation)
+   - Stores the extracted output in Cosmos DB
+
+1. Open **src/services/azure_content_understanding_client.py** and review the REST API integration:
+
+   - **Analyzer creation:** `PUT /contentunderstanding/analyzers/{id}` — creates a custom analyzer based on `prebuilt-documentAnalyzer`
+   - **Document analysis:** `POST /contentunderstanding/analyzers/{id}:analyze` — sends document bytes for extraction
+   - **Polling:** `GET {operation-location}` — polls the async operation until `succeeded` or `failed`
+   - **Authentication:** Uses `Ocp-Apim-Subscription-Key` header with the AI Services key
+
+   >**Content Understanding API pattern:** All Content Understanding operations are **asynchronous long-running operations (LROs)**. You submit a request, receive an `operation-location` URL in the response headers, and poll that URL until the operation completes. This pattern handles large documents that may take several minutes to process.
 
 ## Summary
 
-In this exercise, you have completed the following:
+In this lab, you:
 
-1. Configured **Azure Functions local settings** with the Storage Account connection string.
-2. Updated **app_config.yaml** with real Azure resource endpoints and Key Vault secret references.
-3. Retrieved **endpoints and keys** from deployed Azure resources (OpenAI, AI Services, Cosmos DB, Storage).
-4. Created a **Python virtual environment** and installed all project dependencies.
-5. Started the **Azure Function App** locally and verified all HTTP trigger routes are registered.
-6. Verified **all five backend services** are healthy via the health check API endpoint.
+1. Queried extracted document data using natural language and received LLM-generated responses with citations.
+2. Explored multi-turn conversations using session-based chat history.
+3. Examined the chat history stored in Cosmos DB SQL API.
+4. Understood how Semantic Kernel forces the LLM to retrieve data from Cosmos DB before responding, ensuring all answers are grounded in extracted data.
 
-### You have successfully completed this exercise. Click **Next >>** to proceed to the next exercise.
-
-© 2026 Microsoft Corporation. All rights reserved.
-
-By using this demo/lab, you agree to the following terms:
-
-The technology/functionality described in this demo/lab is provided by Microsoft Corporation for purposes of obtaining your feedback and to provide you with a learning experience. You may only use the demo/lab to evaluate such technology features and functionality and provide feedback to Microsoft. You may not use it for any other purpose. You may not modify, copy, distribute, transmit, display, perform, reproduce, publish, license, create derivative works from, transfer, or sell this demo/lab or any portion thereof.
-
-COPYING OR REPRODUCTION OF THE DEMO/LAB (OR ANY PORTION OF IT) TO ANY OTHER SERVER OR LOCATION FOR FURTHER REPRODUCTION OR REDISTRIBUTION IS EXPRESSLY PROHIBITED.
-
-THIS DEMO/LAB PROVIDES CERTAIN SOFTWARE TECHNOLOGY/PRODUCT FEATURES AND FUNCTIONALITY, INCLUDING POTENTIAL NEW FEATURES AND CONCEPTS, IN A SIMULATED ENVIRONMENT WITHOUT COMPLEX SET-UP OR INSTALLATION FOR THE PURPOSE DESCRIBED ABOVE. THE TECHNOLOGY/CONCEPTS REPRESENTED IN THIS DEMO/LAB MAY NOT REPRESENT FULL FEATURE FUNCTIONALITY AND MAY NOT WORK THE WAY A FINAL VERSION MAY WORK. WE ALSO MAY NOT RELEASE A FINAL VERSION OF SUCH FEATURES OR CONCEPTS. YOUR EXPERIENCE WITH USING SUCH FEATURES AND FUNCTIONALITY IN A PHYSICAL ENVIRONMENT MAY ALSO BE DIFFERENT.
-
-**FEEDBACK**. If you give feedback about the technology features, functionality and/or concepts described in this demo/lab to Microsoft, you give to Microsoft, without charge, the right to use, share and commercialize your feedback in any way and for any purpose. You also give to third parties, without charge, any patent rights needed for their products, technologies and services to use or interface with any specific parts of a Microsoft software or service that includes the feedback. You will not give feedback that is subject to a license that requires Microsoft to license its software or documentation to third parties because we include your feedback in them. These rights survive this agreement.
-
-MICROSOFT CORPORATION HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS WITH REGARD TO THE DEMO/LAB, INCLUDING ALL WARRANTIES AND CONDITIONS OF MERCHANTABILITY, WHETHER EXPRESS, IMPLIED OR STATUTORY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. MICROSOFT DOES NOT MAKE ANY ASSURANCES OR REPRESENTATIONS WITH REGARD TO THE ACCURACY OF THE RESULTS, OUTPUT THAT DERIVES FROM USE OF DEMO/ LAB, OR SUITABILITY OF THE INFORMATION CONTAINED IN THE DEMO/LAB FOR ANY PURPOSE.
-
-**DISCLAIMER**
-
-This demo/lab contains only a portion of new features and enhancements in Microsoft Azure. Some of the features might change in future releases of the product. In this demo/lab, you will learn about some of the new features but not all of the new features.
+In the next lab, you will deploy the Function App to Azure and monitor it with Application Insights.

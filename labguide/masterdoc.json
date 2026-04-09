@@ -3,72 +3,72 @@
   "Language": "English",
   "Labs": [
     {
+      "Number": 0,
+      "FileName": "gettingstarted.md",
+      "Title": "Getting Started",
+      "Description": "Overview of Azure Content Understanding, solution architecture, pre-deployed resources, and Azure Portal sign-in.",
+      "Duration": 15,
+      "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
+      "Type": "Lab"
+    },
+    {
       "Number": 1,
       "FileName": "Lab-01.md",
-      "Title": "Exercise 1 - Environment Setup and Architecture Overview",
-      "Description": "Verify lab prerequisites, explore the project structure in VS Code, review the three-workflow architecture, and explore Azure Content Understanding concepts.",
-      "Duration": 30,
+      "Title": "Lab 01 - Explore Azure Resources and Configure Content Understanding",
+      "Description": "Explore pre-deployed Azure resources, navigate Azure AI Foundry and the Content Understanding project, verify the gpt-4o deployment, set up the Python environment, and configure the application.",
+      "Duration": 60,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
     },
     {
       "Number": 2,
       "FileName": "Lab-02.md",
-      "Title": "Exercise 2 - Deploying Azure Infrastructure with Terraform",
-      "Description": "Authenticate with Azure CLI, configure Terraform variables, deploy the complete Azure infrastructure, and verify all resources in the Azure Portal.",
-      "Duration": 75,
+      "Title": "Lab 02 - Extract Documents Using Azure Content Understanding",
+      "Description": "Review extraction configs, start the Function App, upload field schemas to create Content Understanding analyzers, ingest a lease agreement, and examine extracted data in Cosmos DB.",
+      "Duration": 60,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
     },
     {
       "Number": 3,
       "FileName": "Lab-03.md",
-      "Title": "Exercise 3 - Configuring the Application",
-      "Description": "Configure Azure Functions local settings, update app_config.yaml with Azure endpoints, install dependencies, start the Function App, and verify health checks.",
-      "Duration": 60,
+      "Title": "Lab 03 - Query Extracted Data with Azure OpenAI",
+      "Description": "Query extraction results using natural language, explore multi-turn conversations, examine chat history in Cosmos DB, and understand Semantic Kernel orchestration.",
+      "Duration": 45,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
     },
     {
       "Number": 4,
       "FileName": "Lab-04.md",
-      "Title": "Exercise 4 - Document Extraction Configuration and Ingestion",
-      "Description": "Upload extraction configurations, create CU analyzers, ingest a sample lease agreement, and explore extracted fields with bounding boxes and confidence scores.",
-      "Duration": 75,
-      "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
-      "Type": "Lab"
-    },
-    {
-      "Number": 5,
-      "FileName": "Lab-05.md",
-      "Title": "Exercise 5 - Querying Documents and Deploying to Azure",
-      "Description": "Query documents with natural language, explore citations and chat history, deploy to Azure, and monitor with Application Insights.",
-      "Duration": 75,
+      "Title": "Lab 04 - Deploy to Azure and Monitor",
+      "Description": "Deploy the Function App to Azure, configure and test deployed endpoints, and monitor with Application Insights live metrics.",
+      "Duration": 45,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
     }
   ],
-  "TotalDuration": 315,
+  "TotalDuration": 225,
   "Prerequisites": {
     "Software": [
-      "Python 3.12+",
-      "Azure CLI 2.60+",
-      "Terraform 1.5+",
-      "Azure Functions Core Tools v4",
-      "Git",
-      "Node.js 18+",
-      "Visual Studio Code with Python, Azure Functions, and REST Client extensions"
+      "Python 3.12 (pre-installed)",
+      "Azure CLI (pre-installed)",
+      "Azure Functions Core Tools v4 (pre-installed)",
+      "Git (pre-installed)",
+      "Node.js 18 LTS (pre-installed)",
+      "Visual Studio Code with extensions (pre-installed)"
     ],
     "AzureServices": [
-      "Azure Content Understanding",
-      "Azure OpenAI Service (gpt-4o)",
-      "Azure Functions",
-      "Azure Cosmos DB (Mongo API + SQL API)",
-      "Azure Key Vault",
-      "Azure Storage Account",
-      "Azure Application Insights",
-      "Azure AI Foundry",
-      "Azure Log Analytics Workspace"
+      "Azure AI Content Understanding (pre-deployed)",
+      "Azure OpenAI Service with gpt-4o (pre-deployed)",
+      "Azure Functions (pre-deployed)",
+      "Azure Cosmos DB - MongoDB API (pre-deployed)",
+      "Azure Cosmos DB - SQL API (pre-deployed)",
+      "Azure Key Vault (pre-deployed)",
+      "Azure Storage Account (pre-deployed)",
+      "Azure Application Insights (pre-deployed)",
+      "Azure AI Foundry (pre-deployed)",
+      "Azure Log Analytics Workspace (pre-deployed)"
     ]
   }
 }

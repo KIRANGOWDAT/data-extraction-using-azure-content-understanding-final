@@ -1,332 +1,201 @@
-# Exercise 2: Deploying Azure Infrastructure with Terraform
+# Lab 02: Extract Documents Using Azure Content Understanding
 
-### Estimated Duration: 75 Minutes
+### Estimated Duration: 60 Minutes
 
 ## Overview
 
-In this exercise, you will deploy the complete Azure infrastructure required by the document extraction solution using Terraform. The solution uses Infrastructure as Code (IaC) to ensure reproducible, consistent deployments. You will authenticate with Azure CLI, configure Terraform variables, deploy approximately 30–40 resources in a single run, and verify everything in the Azure Portal — including AI Foundry, Content Understanding, Cosmos DB, and Key Vault.
+In this lab, you will use Azure Content Understanding to extract structured data from documents. You will start the Function App locally, upload an extraction configuration that defines what fields to extract, ingest a sample lease agreement PDF, and examine the extracted results in Azure Cosmos DB.
 
 ## Objectives
 
-In this exercise, you will complete the following tasks:
+After completing this lab, you will have:
 
-- Task 1: Authenticate with Azure CLI
-- Task 2: Configure Terraform variables
-- Task 3: Deploy the Azure infrastructure
-- Task 4: Verify deployed resources in the Azure Portal
-- Task 5: Explore Azure AI Foundry and Content Understanding
-- Task 6: Explore Azure Cosmos DB resources
+- Understood the extraction configuration schema and field definitions
+- Started the Function App locally
+- Uploaded an extraction configuration that creates Content Understanding analyzers
+- Ingested a document and extracted structured fields using Content Understanding
+- Examined extracted data in Azure Cosmos DB with confidence scores
 
-### Task 1: Authenticate with Azure CLI
+### Task 1: Review the extraction configuration
 
-In this task, you will sign in to Azure CLI and select the correct subscription for deployment.
+In this task, you will review the extraction configuration JSON file that defines what fields Azure Content Understanding should extract from documents.
 
-1. On the lab VM, open **Windows Terminal** **(1)** from the taskbar or desktop.
+1. In VS Code, navigate to **configs** folder in the Explorer panel and open **document-extraction-v1.0.json**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image02.png)
+1. Review the configuration structure:
 
-1. Run the following command to sign in to Azure:
-
-   ```
-   az login
-   ```
-
-   A browser window will open. Sign in with your Azure credentials.
-
-   >**Note:** If you encounter a multi-factor authentication (MFA) error, use `az login --tenant <your-tenant-id>` instead. You can find the tenant ID from the error message.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image03.png)
-
-1. After successful authentication, you will see a list of subscriptions. Select the subscription you want to use for this lab when prompted.
-
-   If you are not prompted, list all available subscriptions:
-
-   ```
-   az account list --output table
-   ```
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image04.png)
-
-1. Set the correct subscription for this lab (replace `<your-subscription-id>` with the actual Subscription ID from the table above):
-
-   ```
-   az account set --subscription "<your-subscription-id>"
+   ```json
+   {
+     "id": "document-extraction-v1.0",
+     "name": "document-extraction",
+     "version": "v1.0",
+     "prompt": "You are a helpful assistant tasked with using the necessary tools...",
+     "collection_rows": [{
+       "data_type": "LeaseAgreement",
+       "field_schema": [
+         {"name": "license_grant_scope", "type": "string", "description": "...", "method": "extract"},
+         {"name": "lease_duration", "type": "string", "description": "...", "method": "extract"},
+         {"name": "termination_conditions", "type": "string", "description": "...", "method": "extract"},
+         {"name": "compliance_audit_terms", "type": "string", "description": "...", "method": "extract"},
+         {"name": "prohibited_uses", "type": "string", "description": "...", "method": "extract"}
+       ],
+       "analyzer_id": "test-analyzer"
+     }]
+   }
    ```
 
-1. Verify the selected subscription:
+   >**Understanding the config:**
+   > - **`collection_rows`** — Defines the document types to process. Each row has a `data_type` (e.g., "LeaseAgreement") and a `field_schema`.
+   > - **`field_schema`** — Lists the fields to extract. Each field has a `name`, `type`, `description` (used by Content Understanding as extraction guidance), and `method` (always `"extract"` for field extraction).
+   > - **`analyzer_id`** — The ID for the Content Understanding analyzer that will be created. When you upload this config, the application automatically creates a CU analyzer with this schema.
+   > - **`prompt`** — The system prompt used by the LLM when answering queries about the extracted data.
+
+1. Also review the **document_samples** folder. It contains a single PDF: **Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf** — this is the document you will extract data from.
+
+### Task 2: Start the Function App locally
+
+In this task, you will start the Azure Functions application locally so you can interact with the extraction API.
+
+1. In VS Code, open a terminal (**Ctrl+`**) and make sure the virtual environment is activated:
 
    ```
-   az account show --output table
+   cd C:\LabFiles\data-extraction-using-azure-content-understanding
+   .venv\Scripts\activate
    ```
 
-   Confirm that the **SubscriptionId** and **Name** match your lab subscription.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image05.png)
-
-### Task 2: Configure Terraform variables
-
-In this task, you will configure the Terraform variables that control resource naming, location, and environment settings.
-
-1. In the terminal, navigate to the **iac** directory:
+1. Start the Function App:
 
    ```
-   cd C:\LabFiles\data-extraction-using-azure-content-understanding\iac
+   func start
    ```
 
-1. Copy the sample variables file to create your own:
+1. Wait for the Function App to start. You should see output listing the available HTTP endpoints:
 
    ```
-   copy terraform.tfvars.sample terraform.tfvars
+   Functions:
+     configs_upload_ingest_config: [PUT] http://localhost:7071/api/configs/{name}/versions/{version}
+     configs_get_ingest_config: [GET] http://localhost:7071/api/configs/{name}/versions/{version}
+     configs_get_default_config: [GET] http://localhost:7071/api/configs/default
+     ingest_documents: [POST] http://localhost:7071/api/ingest-documents/{collection_id}/{lease_id}/{document_name}
+     query: [POST] http://localhost:7071/api/v1/query
+     health_check: [GET] http://localhost:7071/api/v1/health
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image06.png)
+   >**Note:** Keep this terminal running. You will use a separate terminal for the remaining tasks.
 
-1. Open **terraform.tfvars** in VS Code:
-
-   ```
-   code terraform.tfvars
-   ```
-
-1. The file will open in VS Code. Replace the placeholder values with the following:
-
-   >**Important:** Edit this file **inside VS Code**, not in the terminal. Do not copy-paste these lines into PowerShell.
-
-   ```hcl
-   # Azure subscription ID where resources will be deployed
-   subscription_id = "<your-subscription-id>"
-
-   # Azure region for resource deployment
-   resource_group_location = "westus"
-
-   # Region abbreviation used in resource naming (keep it short, 2-3 chars)
-   resource_group_location_abbr = "wu"
-
-   # Environment name (dev, test, prod, etc.)
-   environment_name = "dev"
-
-   # Use case name for resource naming — MUST include your DeploymentID to avoid conflicts
-   usecase_name = "dataext<inject key="DeploymentID" />"
-
-   # Resource group — use your existing CloudLabs resource group
-   existing_resource_group_name = "<inject key="Resource Group Name" />"
-   ```
-
-   Replace `<your-subscription-id>` with your actual Azure Subscription ID (the one you selected in Task 1, Step 4). You can get it by running `az account show --query id -o tsv` in the terminal.
-
-   >**Note:** The `<inject key="DeploymentID" />` placeholder is auto-replaced by CloudLabs with your unique deployment ID (e.g., `12345`). This ensures all Azure resource names are unique per student and avoids conflicts with Key Vault soft-delete or pre-existing resources.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image07.png)
-
-1. **Save** the file (**Ctrl+S**) and close the editor tab.
-
-   >**Note:** The resource naming convention follows the pattern `{environment}{usecase}{location_abbr}` — for example, `devdataext12345wu`. All resources will include this prefix followed by a suffix indicating the resource type (e.g., `devdataext12345wuKv0` for Key Vault, `devdataext12345wucosmos0` for Cosmos DB). The DeploymentID makes each student's resources unique.
-
-1. Review the **variables.tf** **(1)** file to understand all available configuration options. Notice the key variables:
-
-   - **resource_group_location** — Azure region (must be a Content Understanding preview region: `westus`, `swedencentral`, or `australiaeast`).
-   - **environment_name** — Environment identifier (dev, test, prod).
-   - **usecase_name** — Short name for resource naming.
-   - **cognitive_deployments** — Defines the Azure OpenAI model deployment (defaults to `gpt-4o`).
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image08.png)
-
-### Task 3: Deploy the Azure infrastructure
-
-In this task, you will initialize Terraform, review the deployment plan, and apply it to create all Azure resources.
-
-1. Initialize Terraform to download provider plugins and modules:
+1. Open a **second terminal** in VS Code (click the **+** icon in the terminal panel) and activate the virtual environment:
 
    ```
-   terraform init
+   cd C:\LabFiles\data-extraction-using-azure-content-understanding
+   .venv\Scripts\activate
    ```
 
-   Wait for the initialization to complete. You should see the message **"Terraform has been successfully initialized!"**
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image09.png)
-
-1. Generate the execution plan to preview what resources will be created:
+1. Test the health check endpoint:
 
    ```
-   terraform plan
+   curl.exe http://localhost:7071/api/v1/health
    ```
 
-   Review the output. You should see approximately **30–40 resources** planned for creation, including:
+   You should see a JSON response showing the status of all connected services (Key Vault, Cosmos DB, OpenAI, Content Understanding, Blob Storage).
 
-   | Resource | Count |
-   |---|---|
-   | Resource Group | 1 |
-   | Key Vault | 1 |
-   | Log Analytics Workspace | 1 |
-   | Cosmos DB accounts (Mongo API + SQL API) | 2 |
-   | Azure OpenAI deployment (gpt-4o) | 1 |
-   | AI Services (Content Understanding) | 1 |
-   | Function App with App Service Plan | 1 |
-   | Storage Account | 1 |
-   | Application Insights | 1 |
-   | RBAC role assignments | Multiple |
+### Task 3: Upload the extraction configuration
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image10.png)
+In this task, you will upload the extraction configuration. This triggers the application to create a **Content Understanding analyzer** with the defined field schema.
 
-1. Apply the Terraform plan to deploy all resources:
+1. In the second terminal, upload the extraction configuration:
 
    ```
-   terraform apply -auto-approve
+   curl.exe -X PUT "http://localhost:7071/api/configs/document-extraction/versions/v1.0" `
+     -H "Content-Type: application/json" `
+     -d @configs/document-extraction-v1.0.json
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image11.png)
+1. Wait for the response (this may take 1–2 minutes). The application is:
 
-   >**Note:** The deployment typically takes **15–25 minutes** to complete. The AI Hub and Cosmos DB resources take the longest to provision. Do not close the terminal during deployment.
+   1. Parsing the field schema from the JSON config
+   2. Building a Content Understanding analyzer template with `baseAnalyzerId: prebuilt-documentAnalyzer`
+   3. Calling the Content Understanding REST API to create the analyzer
+   4. Polling the API until the analyzer creation completes
+   5. Storing the configuration in Cosmos DB (MongoDB API)
 
-1. Wait for the deployment to complete. When finished, you will see **"Apply complete!"** with the count of resources added.
+   You should see a success response when complete.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image12.png)
+   >**What just happened behind the scenes?** The application called `PUT /contentunderstanding/analyzers/test-analyzer` on the Azure AI Content Understanding API. This created a custom analyzer based on the pre-built document analyzer, configured with your 5 field definitions. The analyzer is now ready to extract those specific fields from any document you send it.
 
-1. Take note of any output values displayed at the end — these may include resource names and endpoints needed in later exercises.
+1. Verify the configuration was stored in Cosmos DB. Open the **Azure Portal**, navigate to your **Cosmos DB (MongoDB API)** account (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
 
-### Task 4: Verify deployed resources in the Azure Portal
+1. In the left menu, click **Data Explorer**. Expand **data-extraction-db** > **Configurations** and click **Documents**. You should see the uploaded configuration document with the field schema and a computed `extraction_config_hash` (SHA-256 hash of the field definitions).
 
-In this task, you will navigate to the Azure Portal and verify that all resources were created successfully.
+### Task 4: Ingest a document using Content Understanding
 
-1. Open a web browser and navigate to **https://portal.azure.com**. Sign in with your lab credentials if not already authenticated.
+In this task, you will send a PDF document through the extraction pipeline. Azure Content Understanding will analyze the document and extract the fields you defined.
 
-   >**Note:** Use the same Azure credentials you used to log in with `az login` in Task 1.
+1. In the second terminal, ingest the sample lease agreement:
 
-1. In the Azure Portal, search for **Resource groups** **(1)** in the top search bar and select **Resource groups** **(2)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image13.png)
-
-1. Find and click on the resource group named **<inject key="Resource Group Name" enableCopy="false" />** **(1)**.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image14.png)
-
-1. Review the list of resources in the resource group. Verify that you see the following:
-
-   | Resource Type | Expected Name Pattern |
-   |---|---|
-   | Key Vault | `devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0` |
-   | Log Analytics Workspace | `devdataext<inject key="DeploymentID" enableCopy="false" />wuLog0` |
-   | Azure Cosmos DB account (Mongo) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0` |
-   | Azure Cosmos DB account (SQL) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0` |
-   | Azure OpenAI | `devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0` |
-   | AI services | `devdataext<inject key="DeploymentID" enableCopy="false" />wuais0` |
-   | Function App | `devdataext<inject key="DeploymentID" enableCopy="false" />wufunc*****` (random 5-char suffix) |
-   | Storage Account | `devdataext<inject key="DeploymentID" enableCopy="false" />wusa0` |
-   | Application Insights | `devdataext<inject key="DeploymentID" enableCopy="false" />wuAppi` |
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image15.png)
-
-1. The Terraform deployment creates the Key Vault but does **not** automatically populate secrets. You need to create them manually. In the terminal, run the following commands to retrieve service keys and store them in Key Vault:
-
-   ```powershell
-   # Store Cosmos DB MongoDB connection string
-   $cosmosConn = az cosmosdb keys list --name devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0 --resource-group <inject key="Resource Group Name" enableCopy="false" /> --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
-   Set-Content -Path "$env:TEMP\cosmosconn.txt" -Value $cosmosConn -NoNewline
-   az keyvault secret set --vault-name devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0 --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt"
-
-   # Store Azure OpenAI API key
-   $openaiKey = az cognitiveservices account keys list --name devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0 --resource-group <inject key="Resource Group Name" enableCopy="false" /> --query "key1" -o tsv
-   az keyvault secret set --vault-name devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0 --name "open-ai-key" --value $openaiKey
-
-   # Store AI Services subscription key
-   $aiKey = az cognitiveservices account keys list --name devdataext<inject key="DeploymentID" enableCopy="false" />wuais0 --resource-group <inject key="Resource Group Name" enableCopy="false" /> --query "key1" -o tsv
-   az keyvault secret set --vault-name devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0 --name "ai-foundry-key" --value $aiKey
+   ```
+   curl.exe -X POST "http://localhost:7071/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
+     -H "Content-Type: application/octet-stream" `
+     --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
 
-   >**Note:** The Cosmos DB connection string is saved to a temp file first because it contains `&` characters that PowerShell would misinterpret.
+   >**Understanding the URL parameters:**
+   > - `Collection1` — The collection ID (groups related documents together)
+   > - `Lease1` — The lease ID (identifies a specific lease within the collection)
+   > - `MicrosoftLeaseAgreement` — The document name
 
-1. Verify the secrets were created. Click on the **Key Vault** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0`) in the Azure Portal. Navigate to **Secrets** **(1)** in the left menu. You should see three secrets:
+1. Wait for the response (this may take 2–3 minutes). The extraction pipeline is:
 
-   - `cosmosdb-connection-string`
-   - `open-ai-key`
-   - `ai-foundry-key`
+   1. Loading the extraction configuration from Cosmos DB
+   2. Sending the PDF bytes to Content Understanding's `POST /contentunderstanding/analyzers/test-analyzer:analyze` endpoint
+   3. Polling the operation until the analysis completes
+   4. Receiving structured extraction results with field values, confidence scores, and bounding box coordinates
+   5. Storing the results in Cosmos DB and the markdown in Blob Storage
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image16.png)
+1. Check the Function App terminal (first terminal). You should see log messages showing the extraction progress, including the Content Understanding API calls.
 
-### Task 5: Explore Azure AI Foundry and Content Understanding
+### Task 5: Examine extracted data in Cosmos DB
 
-In this task, you will navigate to Azure AI Foundry to understand how Azure Content Understanding and Azure OpenAI are configured.
+In this task, you will examine the extraction results stored in Cosmos DB to see the structured data that Content Understanding extracted.
 
-1. In the Azure Portal, go back to your resource group and click on the **Azure AI Foundry** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuais0`).
+1. In the Azure Portal, navigate to your **Cosmos DB (MongoDB API)** account (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image17.png)
+1. Open **Data Explorer**. Expand **data-extraction-db** > **Documents** and browse the stored documents.
 
-1. In the left menu, expand **Resource Management** **(1)** and click on **Keys and Endpoint** **(2)**. Note the **KEY 1**, **Location/Region** (`westus`), and the **API endpoint** URL. This endpoint and key will be used by the application to communicate with Azure Content Understanding.
+1. Click on the document for **Collection1**. Examine the structure:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image18.png)
+   - **`id`** — Composite key: `Collection1-{extraction_config_hash}`
+   - **`config-id`** — References the extraction configuration used
+   - **`information.entities`** — Array of extracted lease entities
 
-1. Go back to the resource group and click on the **Azure Open AI** resource for OpenAI (`devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0`) and click on **Go to foundry portal**.
+1. Expand the **`entities`** array and then the **`fields`** object. You should see the 5 extracted fields:
 
-1. Navigate to **deployments** **(1)** and verify that the **gpt-4o** model has been deployed with the following settings:
+   | Field | What Content Understanding Extracted |
+   |-------|--------------------------------------|
+   | `license_grant_scope` | The scope of the license grant from the lease agreement |
+   | `lease_duration` | Duration terms of the lease |
+   | `termination_conditions` | Conditions under which the lease can be terminated |
+   | `compliance_audit_terms` | Audit and compliance requirements |
+   | `prohibited_uses` | Uses that are explicitly prohibited |
 
-   - **Model:** `gpt-4o`
-   - **Version:** `2024-08-06`
-   - **Deployment type:** Standard
+1. For each extracted field, notice the detailed metadata:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image19.png)
+   - **`valueString`** — The actual extracted text
+   - **`confidence`** — A score between 0 and 1 indicating extraction confidence
+   - **`spans`** — Character offset and length in the original document
+   - **`source`** — Bounding box coordinates (page, x, y positions) for traceability
 
-1. Click on the **gpt-4o** , Note the **Endpoint** and **Keys** for the Azure OpenAI resource — you will need these in the next exercise to configure the application.
+   >**Why are confidence scores and bounding boxes important?** Confidence scores help you assess extraction reliability — low-confidence extractions may need human review. Bounding boxes enable you to highlight or link back to the exact location in the source document where the data was found, providing full traceability.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image20.png)
-
-### Task 6: Explore Azure Cosmos DB resources
-
-In this task, you will explore the two Cosmos DB accounts and understand their different roles in the solution.
-
-1. In your resource group, click on the **Cosmos DB account** **(1)** with the Mongo API (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0`).
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image21.png)
-
-1. In the left menu, navigate to **Data Explorer** **(1)**. This Cosmos DB (Mongo API) instance will store:
-
-   - **Configurations** collection — Extraction configuration schemas
-   - **Documents** collection — Extracted document data with fields, bounding boxes, and confidence scores
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image22.png)
-
-   >**Note:** The database and collections will be created automatically when the application first runs.
-
-1. Go back to the resource group and click on the **Cosmos DB account** **(1)** with the SQL API (`devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`).
-
-1. Open **Data Explorer** **(1)**. Notice the **knowledge-base-db** database with the **chat-history** container. This stores conversational query history per user session.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image23.png)
-
-1. Expand the **knowledge-base-db** database and click on the **chat-history** **(1)** container to reveal its sub-items: **Items**, **Scale & Settings**, **Stored Procedures**, **User Defined Functions**, and **Triggers**. This container stores conversational query history with a partition key of `/id` for efficient lookups by session and user.
-
-   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image24.png)
-
-   >**Note:** The Terraform deployment automatically configures role-based access control (RBAC) for multiple services:
-   > - **Cosmos DB SQL API**: Assigns `Cosmos DB Built-in Data Contributor` to both the Function App managed identity and your deploying user.
-   > - **Storage Account**: Assigns `Storage Blob Data Contributor` to both the Function App managed identity and your deploying user, enabling blob read/write access for document ingestion.
-   > - **AI Services**: Assigns `Cognitive Services User` to both the Function App managed identity and your deploying user.
+1. Go back to your resource group and navigate to the **Storage Account** (`devdataext<inject key="DeploymentID" enableCopy="false" />wusa0`). Click **Data storage** > **Containers** > **processed**. You should see the markdown file generated by Content Understanding — this is the full document converted to structured markdown format.
 
 ## Summary
 
-In this exercise, you have completed the following:
+In this lab, you:
 
-1. Authenticated with **Azure CLI** and selected the correct subscription.
-2. Configured **Terraform variables** for resource naming and deployment region.
-3. Deployed approximately **30–40 Azure resources** using `terraform init`, `plan`, and `apply`.
-4. Verified all deployed resources in the **Azure Portal** including Key Vault secrets.
-5. Explored **Azure AI Foundry** — AI Services endpoint and Azure OpenAI gpt-4o model deployment.
-6. Explored **Azure Cosmos DB** — Mongo API for data storage and SQL API for chat history.
+1. Reviewed the extraction configuration schema that defines what fields to extract from documents.
+2. Started the Function App locally and verified the health check.
+3. Uploaded the extraction configuration, which automatically created a Content Understanding analyzer.
+4. Ingested a lease agreement PDF and extracted 5 structured fields using Azure Content Understanding.
+5. Examined the extraction results in Cosmos DB, including confidence scores and bounding box coordinates.
 
-### You have successfully completed this exercise. Click **Next >>** to proceed to the next exercise.
-
-© 2026 Microsoft Corporation. All rights reserved.
-
-By using this demo/lab, you agree to the following terms:
-
-The technology/functionality described in this demo/lab is provided by Microsoft Corporation for purposes of obtaining your feedback and to provide you with a learning experience. You may only use the demo/lab to evaluate such technology features and functionality and provide feedback to Microsoft. You may not use it for any other purpose. You may not modify, copy, distribute, transmit, display, perform, reproduce, publish, license, create derivative works from, transfer, or sell this demo/lab or any portion thereof.
-
-COPYING OR REPRODUCTION OF THE DEMO/LAB (OR ANY PORTION OF IT) TO ANY OTHER SERVER OR LOCATION FOR FURTHER REPRODUCTION OR REDISTRIBUTION IS EXPRESSLY PROHIBITED.
-
-THIS DEMO/LAB PROVIDES CERTAIN SOFTWARE TECHNOLOGY/PRODUCT FEATURES AND FUNCTIONALITY, INCLUDING POTENTIAL NEW FEATURES AND CONCEPTS, IN A SIMULATED ENVIRONMENT WITHOUT COMPLEX SET-UP OR INSTALLATION FOR THE PURPOSE DESCRIBED ABOVE. THE TECHNOLOGY/CONCEPTS REPRESENTED IN THIS DEMO/LAB MAY NOT REPRESENT FULL FEATURE FUNCTIONALITY AND MAY NOT WORK THE WAY A FINAL VERSION MAY WORK. WE ALSO MAY NOT RELEASE A FINAL VERSION OF SUCH FEATURES OR CONCEPTS. YOUR EXPERIENCE WITH USING SUCH FEATURES AND FUNCTIONALITY IN A PHYSICAL ENVIRONMENT MAY ALSO BE DIFFERENT.
-
-**FEEDBACK**. If you give feedback about the technology features, functionality and/or concepts described in this demo/lab to Microsoft, you give to Microsoft, without charge, the right to use, share and commercialize your feedback in any way and for any purpose. You also give to third parties, without charge, any patent rights needed for their products, technologies and services to use or interface with any specific parts of a Microsoft software or service that includes the feedback. You will not give feedback that is subject to a license that requires Microsoft to license its software or documentation to third parties because we include your feedback in them. These rights survive this agreement.
-
-MICROSOFT CORPORATION HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS WITH REGARD TO THE DEMO/LAB, INCLUDING ALL WARRANTIES AND CONDITIONS OF MERCHANTABILITY, WHETHER EXPRESS, IMPLIED OR STATUTORY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. MICROSOFT DOES NOT MAKE ANY ASSURANCES OR REPRESENTATIONS WITH REGARD TO THE ACCURACY OF THE RESULTS, OUTPUT THAT DERIVES FROM USE OF DEMO/ LAB, OR SUITABILITY OF THE INFORMATION CONTAINED IN THE DEMO/LAB FOR ANY PURPOSE.
-
-**DISCLAIMER**
-
-This demo/lab contains only a portion of new features and enhancements in Microsoft Azure. Some of the features might change in future releases of the product. In this demo/lab, you will learn about some of the new features but not all of the new features.
+In the next lab, you will query the extracted data using natural language powered by Azure OpenAI and Semantic Kernel.
