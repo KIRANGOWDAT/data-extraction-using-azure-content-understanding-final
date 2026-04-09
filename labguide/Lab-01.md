@@ -31,9 +31,9 @@ In this task, you will navigate to the Azure Portal and explore the resources th
    | Key Vault | `devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0` | Stores API keys and connection strings |
    | Azure Cosmos DB (MongoDB) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmos0` | Stores extraction configs and extracted data |
    | Azure Cosmos DB (SQL) | `devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0` | Stores chat history |
-   | Azure OpenAI | `devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0` | Hosts the gpt-4o model |
+   | Azure OpenAI | `aoaidevdataext<inject key="DeploymentID" enableCopy="false" />wu` | Hosts the gpt-4o model |
    | AI Services | `devdataext<inject key="DeploymentID" enableCopy="false" />wuais0` | Azure Content Understanding |
-   | Storage Account | `devdataext<inject key="DeploymentID" enableCopy="false" />wusa0` | Stores processed documents |
+   | Storage Account | `devdataext<inject key="DeploymentID" enableCopy="false" />wusa*****` (random suffix) | Stores processed documents |
    | Function App | `devdataext<inject key="DeploymentID" enableCopy="false" />wufunc*****` | Hosts the extraction API |
    | Application Insights | `devdataext<inject key="DeploymentID" enableCopy="false" />wuAppi` | Monitoring and tracing |
 
@@ -70,7 +70,7 @@ In this task, you will explore Azure AI Foundry to understand the Content Unders
 
 In this task, you will verify the Azure OpenAI model deployment that powers the natural language query interface.
 
-1. Go back to the Azure Portal. In your resource group, click on the **Azure OpenAI** resource (`devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0`).
+1. Go back to the Azure Portal. In your resource group, click on the **Azure OpenAI** resource (`aoaidevdataext<inject key="DeploymentID" enableCopy="false" />wu`).
 
 1. On the overview page, click **Go to Azure AI Foundry** (or **Go to Azure OpenAI Studio**).
 
@@ -83,7 +83,7 @@ In this task, you will verify the Azure OpenAI model deployment that powers the 
 1. Click on the **gpt-4o** deployment. Note the **Target URI** (endpoint) — it should look like:
 
    ```
-   https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-04-01-preview
+   https://aoaidevdataext<inject key="DeploymentID" enableCopy="false" />wu.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-04-01-preview
    ```
 
    >**How does this fit the architecture?** When a user queries extracted data, the application uses **Semantic Kernel** to send the query + extracted document data to this gpt-4o deployment. The LLM formulates a response using the extracted fields as context.
@@ -136,11 +136,11 @@ In this task, you will configure the application with the correct Azure resource
    |---------|-------|
    | `key_vault_uri` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/` |
    | `tenant_id` | Your Azure Tenant ID (find it in Azure Portal > Azure Active Directory > Overview) |
-   | `llm.endpoint.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o` |
+   | `llm.endpoint.value` | `https://aoaidevdataext<inject key="DeploymentID" enableCopy="false" />wu.openai.azure.com/openai/deployments/gpt-4o` |
    | `content_understanding.endpoint.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/` |
    | `content_understanding.project_id.value` | The Project ID you copied from AI Foundry in Task 2 |
    | `chat_history.endpoint.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
-   | `blob_storage.account_url.value` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wusa0.blob.core.windows.net/` |
+   | `blob_storage.account_url.value` | Find your Storage Account in the resource group (name starts with `devdataext<inject key="DeploymentID" enableCopy="false" />wusa`) and copy its **Blob service endpoint** from the **Endpoints** page |
 
    >**Understanding the config structure:** Values with `type: "secret"` (like `open-ai-key`, `ai-foundry-key`, `cosmosdb-connection-string`) are resolved from Key Vault at runtime — you do NOT paste actual keys here. Only the `value:` fields for endpoints need to be updated.
 

@@ -68,11 +68,11 @@ In this task, you will update the application configuration for the deployed env
    | `key_vault_uri` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/` |
    | `tenant_id` | Your Azure tenant ID (same as `local:`) |
    | `user_managed_identity.client_id` | Leave empty (`""`) — the deployed app uses **system-assigned managed identity** |
-   | `llm.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuaoai0.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
+   | `llm.endpoint` | `https://aoaidevdataext<inject key="DeploymentID" enableCopy="false" />wu.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
    | `content_understanding.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/` (same as `local:`) |
    | `content_understanding.project_id` | Your AI Foundry project ID (same as `local:`) |
    | `chat_history.endpoint` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
-   | `blob_storage.account_url` | `https://devdataext<inject key="DeploymentID" enableCopy="false" />wusa0.blob.core.windows.net/` |
+   | `blob_storage.account_url` | Find your Storage Account in the resource group (name starts with `devdataext<inject key="DeploymentID" enableCopy="false" />wusa`) and use its Blob service endpoint |
 
    >**Tip:** The easiest approach is to copy all values from your `local:` section and paste them into the corresponding `dev:` fields. The **secret references** (like `cosmosdb-connection-string`, `open-ai-key`, `ai-foundry-key`) do **not** need to change — they point to the same Key Vault secrets.
 

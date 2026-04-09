@@ -349,6 +349,20 @@ function Get-LocationAbbreviation {
     return $Location.Substring(0, [Math]::Min(3, $Location.Length))
 }
 
+function Get-VMResourceGroup {
+    Write-Log "Detecting resource group from Azure Instance Metadata Service..."
+    try {
+        $metadata = Invoke-RestMethod -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -Headers @{Metadata="true"} -TimeoutSec 5
+        $rgName = $metadata.compute.resourceGroupName
+        Write-Log "IMDS detected RG: $rgName"
+        return $rgName
+    } catch {
+        Write-Log "WARNING: IMDS not available, falling back to az group list"
+        $rgName = (az group list --query "[0].name" -o tsv)
+        return $rgName
+    }
+}
+
 function Deploy-AzureInfrastructure {
     Write-Log "Starting Azure infrastructure deployment..."
 
@@ -363,8 +377,8 @@ function Deploy-AzureInfrastructure {
     az account set --subscription $AzureSubscriptionID
     Write-Log "Azure login successful."
 
-    # Detect resource group and location
-    $rgName = (az group list --query "[0].name" -o tsv)
+    # Detect resource group and location (IMDS is reliable at scale)
+    $rgName = Get-VMResourceGroup
     $location = (az group show --name $rgName --query "location" -o tsv)
     $locationAbbr = Get-LocationAbbreviation -Location $location
     Write-Log "Resource Group: $rgName | Location: $location ($locationAbbr)"
@@ -407,38 +421,59 @@ usecase_name                 = "dataext$DeploymentID"
 function Populate-KeyVaultSecrets {
     Write-Log "Populating Key Vault secrets..."
 
-    $rgName = (az group list --query "[0].name" -o tsv)
+    $rgName = Get-VMResourceGroup
     $location = (az group show --name $rgName --query "location" -o tsv)
     $locationAbbr = Get-LocationAbbreviation -Location $location
     $prefix = "devdataext${DeploymentID}${locationAbbr}"
+    $prefixLower = $prefix.ToLower()
+
+    # Discover actual resource names from the resource group (handles naming patterns reliably)
+    $kvName = (az keyvault list --resource-group $rgName --query "[0].name" -o tsv)
+    $cosmosName = (az cosmosdb list --resource-group $rgName --query "[?contains(name,'cosmos0')].name" -o tsv)
+    $openaiName = (az cognitiveservices account list --resource-group $rgName --query "[?kind=='OpenAI'].name" -o tsv)
+    $aiServicesName = (az cognitiveservices account list --resource-group $rgName --query "[?kind=='AIServices'].name" -o tsv)
+
+    Write-Log "Discovered resources — KV: $kvName | Cosmos: $cosmosName | OpenAI: $openaiName | AI Services: $aiServicesName"
 
     # Cosmos DB MongoDB connection string (contains & chars, must use file)
-    $cosmosConn = az cosmosdb keys list --name "${prefix}cosmos0" --resource-group $rgName --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
-    if ($cosmosConn) {
-        Set-Content -Path "$env:TEMP\cosmosconn.txt" -Value $cosmosConn -NoNewline
-        az keyvault secret set --vault-name "${prefix}Kv0" --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt" 2>&1 | Out-Null
-        Remove-Item "$env:TEMP\cosmosconn.txt" -Force -ErrorAction SilentlyContinue
-        Write-Log "Stored cosmosdb-connection-string in Key Vault."
+    if ($cosmosName) {
+        $cosmosConn = az cosmosdb keys list --name $cosmosName --resource-group $rgName --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
+        if ($cosmosConn) {
+            Set-Content -Path "$env:TEMP\cosmosconn.txt" -Value $cosmosConn -NoNewline
+            az keyvault secret set --vault-name $kvName --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt" 2>&1 | Out-Null
+            Remove-Item "$env:TEMP\cosmosconn.txt" -Force -ErrorAction SilentlyContinue
+            Write-Log "Stored cosmosdb-connection-string in Key Vault."
+        } else {
+            Write-Log "WARNING: Could not retrieve Cosmos DB connection string."
+        }
     } else {
-        Write-Log "WARNING: Could not retrieve Cosmos DB connection string."
+        Write-Log "WARNING: Cosmos DB (MongoDB) resource not found."
     }
 
     # Azure OpenAI key
-    $openaiKey = az cognitiveservices account keys list --name "${prefix}aoai0" --resource-group $rgName --query "key1" -o tsv
-    if ($openaiKey) {
-        az keyvault secret set --vault-name "${prefix}Kv0" --name "open-ai-key" --value $openaiKey 2>&1 | Out-Null
-        Write-Log "Stored open-ai-key in Key Vault."
+    if ($openaiName) {
+        $openaiKey = az cognitiveservices account keys list --name $openaiName --resource-group $rgName --query "key1" -o tsv
+        if ($openaiKey) {
+            az keyvault secret set --vault-name $kvName --name "open-ai-key" --value $openaiKey 2>&1 | Out-Null
+            Write-Log "Stored open-ai-key in Key Vault."
+        } else {
+            Write-Log "WARNING: Could not retrieve Azure OpenAI key."
+        }
     } else {
-        Write-Log "WARNING: Could not retrieve Azure OpenAI key."
+        Write-Log "WARNING: Azure OpenAI resource not found."
     }
 
     # AI Services key
-    $aiKey = az cognitiveservices account keys list --name "${prefix}ais0" --resource-group $rgName --query "key1" -o tsv
-    if ($aiKey) {
-        az keyvault secret set --vault-name "${prefix}Kv0" --name "ai-foundry-key" --value $aiKey 2>&1 | Out-Null
-        Write-Log "Stored ai-foundry-key in Key Vault."
+    if ($aiServicesName) {
+        $aiKey = az cognitiveservices account keys list --name $aiServicesName --resource-group $rgName --query "key1" -o tsv
+        if ($aiKey) {
+            az keyvault secret set --vault-name $kvName --name "ai-foundry-key" --value $aiKey 2>&1 | Out-Null
+            Write-Log "Stored ai-foundry-key in Key Vault."
+        } else {
+            Write-Log "WARNING: Could not retrieve AI Services key."
+        }
     } else {
-        Write-Log "WARNING: Could not retrieve AI Services key."
+        Write-Log "WARNING: AI Services resource not found."
     }
 
     Write-Log "Key Vault secrets populated."
