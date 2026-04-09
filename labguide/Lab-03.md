@@ -33,7 +33,7 @@ In this task, you will create the local Azure Functions settings file that defin
    copy local.settings.sample.json local.settings.json
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image02.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image02.png)
 
 1. Open **local.settings.json** **(1)** in the VS Code Explorer. Review the contents:
 
@@ -51,7 +51,7 @@ In this task, you will create the local Azure Functions settings file that defin
    }
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image03.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image03.png)
 
 1. Notice the key settings:
 
@@ -62,7 +62,7 @@ In this task, you will create the local Azure Functions settings file that defin
 
 1. Navigate to the **Azure Portal**, open your **Storage Account** **(1)** (`devdataextwuSa<inject_random_string>`), go to **Access keys** **(2)**, and copy the **Connection string** **(3)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image04.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image04.png)
 
 1. Replace the `UseDevelopmentStorage=true` value in **local.settings.json** with the copied connection string:
 
@@ -90,7 +90,7 @@ In this task, you will update the application configuration file with the actual
 
 1. In VS Code Explorer, navigate to **src** > **resources** **(1)** and click on **app_config.yaml** **(2)** to open it.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image05.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image05.png)
 
 1. The file has a `local:` section at the top that corresponds to the `ENVIRONMENT=local` setting. It contains configuration for:
 
@@ -103,7 +103,7 @@ In this task, you will update the application configuration file with the actual
 
 1. Start with the **Key Vault URI**. In the Azure Portal, open your Key Vault **(1)** (`devdataextwuKv0`), go to **Overview** **(2)**, and copy the **Vault URI** **(3)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image06.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image06.png)
 
 1. Update the `key_vault_uri` value in the `local:` section:
 
@@ -118,7 +118,7 @@ In this task, you will update the application configuration file with the actual
    az account show --query tenantId -o tsv
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image07.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image07.png)
 
 1. Update the `tenant_id` value in the `local:` section with the copied tenant ID.
 
@@ -128,7 +128,7 @@ In this task, you will gather all remaining endpoints and configuration values f
 
 1. Get the **Azure OpenAI endpoint**. In the Azure Portal, navigate to your Azure OpenAI resource **(1)** (`devdataextwuaoai0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** URL **(3)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image08.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image08.png)
 
 1. Update the `llm` section in **app_config.yaml**:
 
@@ -149,11 +149,11 @@ In this task, you will gather all remaining endpoints and configuration values f
 
 1. Get the **Content Understanding endpoint**. In the Azure Portal, navigate to your AI Services resource **(1)** (`devdataextwuais0`), go to **Keys and Endpoint** **(2)**, and copy the **Endpoint** **(3)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image09.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image09.png)
 
 1. Get the **AI Foundry Project ID**. Navigate to the **AI Foundry project** **(1)** in the Azure Portal. The project ID can be found in the project overview or properties.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image10.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image10.png)
 
 1. Update the `content_understanding` section:
 
@@ -172,7 +172,7 @@ In this task, you will gather all remaining endpoints and configuration values f
 
 1. Get the **Cosmos DB SQL API endpoint** for chat history. Navigate to your Cosmos DB SQL API account **(1)** (`devdataextwucosmoskb0`) and copy the **URI** **(2)** from the overview page.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image11.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image11.png)
 
 1. Update the `chat_history` section:
 
@@ -192,7 +192,7 @@ In this task, you will gather all remaining endpoints and configuration values f
 
 1. Get the **Storage Account URL**. Navigate to your Storage Account **(1)** (`devdataextwuSa<inject_random_string>`) and copy the **Blob service endpoint** **(2)** from the overview page.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image12.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image12.png)
 
 1. Update the `blob_storage` section with the Blob service endpoint you just copied:
 
@@ -206,7 +206,7 @@ In this task, you will gather all remaining endpoints and configuration values f
 
 1. **Save** the file (**Ctrl+S**). Your `local:` section should now have all real values for Key Vault URI, tenant ID, OpenAI endpoint, Content Understanding endpoint, Cosmos DB endpoints, and Storage Account URL.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image13.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image13.png)
 
    >**Note:** Secret values (Cosmos DB connection string, OpenAI API key, AI Services subscription key) are NOT stored directly in this file. They are referenced by Key Vault secret names (e.g., `key: "cosmosdb-connection-string"`, `type: "secret"`). The application resolves them at runtime using the Key Vault URI. This is a security best practice.
 
@@ -226,7 +226,7 @@ In this task, you will create a Python virtual environment and install all requi
    python -m venv .venv
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image14.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image14.png)
 
 1. Activate the virtual environment:
 
@@ -236,7 +236,7 @@ In this task, you will create a Python virtual environment and install all requi
 
    You should see `(.venv)` appear at the beginning of your terminal prompt.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image15.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image15.png)
 
 1. Install the project dependencies:
 
@@ -258,11 +258,11 @@ In this task, you will create a Python virtual environment and install all requi
    | `requests` | HTTP client for Content Understanding API |
    | `cachetools` | TTL caching for health checks and collection data |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image16.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image16.png)
 
 1. Wait for the installation to complete. You should see **"Successfully installed"** followed by a list of all installed packages.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image17.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image17.png)
 
 1. Verify VS Code is configured to use the virtual environment. Open **.vscode/settings.json** **(1)** and confirm the following setting exists:
 
@@ -272,7 +272,7 @@ In this task, you will create a Python virtual environment and install all requi
    }
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image18.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image18.png)
 
 ### Task 5: Start the Azure Function App locally
 
@@ -286,7 +286,7 @@ In this task, you will start the Azure Functions application locally and verify 
    func start --script-root ./src/
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image19.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image19.png)
 
 1. Wait for the Function App to initialize. You should see output showing that the following HTTP trigger functions have been registered:
 
@@ -302,7 +302,7 @@ In this task, you will start the Azure Functions application locally and verify 
        ingest_documents:  [POST] http://localhost:7071/api/ingest-documents/{collection_id}/{lease_id}/{document_name}
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image20.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image20.png)
 
    >**Note:** If you see errors related to Key Vault authentication, ensure you are logged in to Azure CLI (`az login`) in the same terminal session. The application uses `DefaultAzureCredential` which falls back to Azure CLI credentials for local development.
 
@@ -322,7 +322,7 @@ In this task, you will test the health check endpoint to verify that the applica
 
    You should receive a simple **200 OK** response confirming the Function App is running.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image21.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image21.png)
 
 1. Test the **full health check** that verifies connectivity to all backend services:
 
@@ -330,7 +330,7 @@ In this task, you will test the health check endpoint to verify that the applica
    curl.exe http://localhost:7071/api/v1/health
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image22.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image22.png)
 
 1. Review the health check response. When all services are healthy, you will see:
 
@@ -361,11 +361,11 @@ In this task, you will test the health check endpoint to verify that the applica
 
 1. Alternatively, you can use the pre-installed **REST Client** extension to test APIs directly from VS Code. Open the file **src/samples/health_check_sample.http** **(1)**. You will see a clickable **Send Request** link above each `###` separator. Click **Send Request** **(2)** on the **local health check** line (line 13).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image23.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image23.png)
 
 1. The REST Client displays the response inline in VS Code, which is convenient for testing APIs throughout the remaining exercises.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image24.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-03/image24.png)
 
 ## Summary
 

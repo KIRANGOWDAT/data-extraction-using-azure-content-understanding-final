@@ -175,9 +175,9 @@ function Clone-LabRepository {
     $gitPath = "C:\Program Files\Git\bin\git.exe"
 
     if (Test-Path $gitPath) {
-        & $gitPath clone "https://github.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding"
+        & $gitPath clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding"
     } else {
-        git clone "https://github.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding"
+        git clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding"
     }
 
     Write-Log "Repository cloned to $labFilesPath."

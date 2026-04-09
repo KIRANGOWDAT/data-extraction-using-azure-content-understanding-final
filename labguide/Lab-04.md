@@ -33,7 +33,7 @@ In this task, you will examine the extraction configuration JSON file and unders
 
 1. In VS Code Explorer, expand the **configs** **(1)** folder and click on **document-extraction-v1.0.json** **(2)** to open it.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image02.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image02.png)
 
 1. Review the top-level structure of the configuration:
 
@@ -70,7 +70,7 @@ In this task, you will examine the extraction configuration JSON file and unders
    }
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image03.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image03.png)
 
 1. Understand each field property:
 
@@ -103,15 +103,15 @@ In this task, you will upload the configuration to the running Function App, whi
      -d @configs/document-extraction-v1.0.json
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image04.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image04.png)
 
 1. You should see a **"Configuration uploaded successfully."** message confirming the upload.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image05.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image05.png)
 
 1. Alternatively, use the **REST Client** extension. Open the file **src/samples/config_update_sample.http** **(1)** and click **Send Request** **(2)** on the local PUT request line.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image06.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image06.png)
 
 1. Behind the scenes, the upload process performs these actions:
 
@@ -128,7 +128,7 @@ In this task, you will upload the configuration to the running Function App, whi
 
    You should see the full configuration JSON returned, including the computed `extraction_config_hash`.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image07.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image07.png)
 
 ### Task 3: Verify the configuration in Cosmos DB
 
@@ -138,13 +138,13 @@ In this task, you will navigate to Cosmos DB in the Azure Portal and inspect the
 
 1. Open **Data Explorer** **(1)** from the left menu.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image08.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image08.png)
 
 1. Expand the **data-extraction-db** **(1)** database and click on the **Configurations** **(2)** collection.
 
 1. Click on **Documents** **(1)** to view the stored configuration document. You should see a document with `_id: "document-extraction-v1.0"`.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image09.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image09.png)
 
 1. Expand the document and review the stored fields:
 
@@ -154,7 +154,7 @@ In this task, you will navigate to Cosmos DB in the Azure Portal and inspect the
    - **collection_rows** — Complete field schemas and analyzer ID
    - **lease_config_hash** — The SHA-256 hash of the extraction configuration
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image10.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image10.png)
 
    >**Note:** The `lease_config_hash` is a critical component. When documents are ingested, they are associated with this hash. If the extraction configuration changes, a new hash is generated, and documents need to be re-ingested to ensure consistency.
 
@@ -168,7 +168,7 @@ In this task, you will trace the code path for document ingestion to understand 
    POST /api/ingest-documents/{collection_id}/{lease_id}/{document_name}
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image11.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image11.png)
 
 1. Open **src/controllers/ingest_lease_documents_controller.py** **(1)**. Review the `ingest_documents()` method, which performs these steps:
 
@@ -178,14 +178,14 @@ In this task, you will trace the code path for document ingestion to understand 
    1. Polls the CU operation until completion via `poll_result()`.
    1. Calls the ingestion service to process and store the results.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image12.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image12.png)
 
 1. Open **src/services/azure_content_understanding_client.py** **(1)**. Review the key methods:
 
    - `begin_analyze_data(analyzer_id, file_bytes)` — Sends the PDF binary to the CU analyzer and returns an operation URL.
    - `poll_result(operation_url)` — Polls the operation URL until the status is "succeeded" or "failed".
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image13.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image13.png)
 
 1. Open **src/services/ingest_lease_documents_service.py** **(1)**. Review `ingest_analyzer_output()` which:
 
@@ -197,7 +197,7 @@ In this task, you will trace the code path for document ingestion to understand 
    1. Upserts the complete document to the Cosmos DB "Documents" collection.
    1. Releases the lock.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image14.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image14.png)
 
 ### Task 5: Ingest a sample lease agreement document
 
@@ -211,7 +211,7 @@ In this task, you will send the sample lease agreement PDF to the ingestion endp
      --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image15.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image15.png)
 
    >**Note:** The **first time** you run this command, the Function App may restart automatically because the ingestion process creates an `analyzer_cache` folder, which triggers the file watcher. If the command hangs with no response, press **Ctrl+C** to cancel it and **run the same command again**. The second attempt will succeed because the folder already exists.
 
@@ -224,15 +224,15 @@ In this task, you will send the sample lease agreement PDF to the ingestion endp
    - Data stored in Cosmos DB
    - Markdown uploaded to Blob Storage
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image16.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image16.png)
 
 1. Wait for the response. A successful ingestion returns a **200 OK** status.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image17.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image17.png)
 
 1. Alternatively, use the **REST Client** extension. Open **src/samples/ingest_doc_sample.http** **(1)** and click **Send Request** **(2)** on the local POST request.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image18.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image18.png)
 
    >**Note:** The first ingestion call may take **30–60 seconds** as Azure Content Understanding processes the document. Subsequent calls for already-ingested documents return immediately due to the deduplication check.
 
@@ -246,7 +246,7 @@ In this task, you will inspect the extracted document data stored in Cosmos DB.
 
 1. Click on the **Documents** **(1)** collection. You should see a new document with an ID following the pattern `Collection1-{config_hash}`.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image19.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image19.png)
 
 1. Click on the document to expand it. Review the structure:
 
@@ -274,7 +274,7 @@ In this task, you will inspect the extracted document data stored in Cosmos DB.
    }
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image20.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image20.png)
 
 ### Task 7: Explore extracted fields, bounding boxes, and confidence scores
 
@@ -296,7 +296,7 @@ In this task, you will examine the individual extracted field values and their m
    }
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image21.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image21.png)
 
 1. Understand each metadata field:
 
@@ -316,7 +316,7 @@ In this task, you will examine the individual extracted field values and their m
    - **compliance_audit_terms** — Audit rights and compliance verification terms
    - **prohibited_uses** — Restrictions and forbidden activities
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image22.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image22.png)
 
 1. Compare the confidence scores across fields. Fields with clear, unambiguous language typically have higher scores (above 0.9), while fields requiring interpretation may have lower scores.
 
@@ -328,17 +328,17 @@ In this task, you will verify that the document's markdown representation was up
 
 1. Open **Containers** **(1)** from the left menu and click on the **processed** **(2)** container.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image23.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image23.png)
 
 1. Navigate through the folder hierarchy: **Collections** **(1)** → **Collection1** **(2)** → **Lease1** **(3)**.
 
 1. You should see the markdown file **MicrosoftLeaseAgreement.md** **(1)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image24.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image24.png)
 
 1. Click on the markdown file and select **Edit** **(1)** to preview its contents. This is the full-text markdown representation of the PDF document generated by Azure Content Understanding.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image25.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-04/image25.png)
 
    >**Note:** The markdown representation preserves the text content while being more machine-readable than the original PDF. The bounding box coordinates in each extracted field reference specific positions in the original PDF for precise traceability.
 

@@ -34,7 +34,7 @@ In this task, you will trace the query pipeline code to understand how natural l
 
 1. In VS Code, open the file **src/controllers/inference_controller.py** **(1)**. Review the `query()` method:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image02.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image02.png)
 
 1. The query process follows these steps:
 
@@ -47,7 +47,7 @@ In this task, you will trace the query pipeline code to understand how natural l
 
 1. Open **src/services/llm_request_manager.py** **(1)**. Review the `answer_collection_question()` method:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image03.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image03.png)
 
 1. Key implementation details:
 
@@ -58,7 +58,7 @@ In this task, you will trace the query pipeline code to understand how natural l
 
 1. Open **src/services/collection_kernel_plugin.py** **(1)**. Review the `get_collection_data()` method decorated with `@kernel_function`:
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image04.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image04.png)
 
 1. This Semantic Kernel plugin method:
 
@@ -81,7 +81,7 @@ In this task, you will send natural language queries to the API and examine the 
      -d '{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What are the termination conditions for Lease1?\"}'
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image05.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image05.png)
 
 1. Review the response structure:
 
@@ -103,7 +103,7 @@ In this task, you will send natural language queries to the API and examine the 
    }
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image06.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image06.png)
 
 1. Understand each part of the response:
 
@@ -122,7 +122,7 @@ In this task, you will send natural language queries to the API and examine the 
      -d '{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What is the scope of the license grant?\"}'
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image07.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image07.png)
 
 1. Try a more analytical query:
 
@@ -133,11 +133,11 @@ In this task, you will send natural language queries to the API and examine the 
      -d '{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"Are there any prohibited uses? List them all.\"}'
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image08.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image08.png)
 
 1. Alternatively, use the **REST Client** extension. Open **src/samples/query_api_sample.http** **(1)** and modify the local query request with your collection ID. Click **Send Request** **(2)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image09.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image09.png)
 
 ### Task 3: Explore citations and source references
 
@@ -155,13 +155,13 @@ In this task, you will understand how citations trace back to the original docum
    | **page** | Page number in the PDF (1-indexed) |
    | **x1,y1 → x4,y4** | Four corner coordinates of the bounding polygon |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image10.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image10.png)
 
 1. This traceability is critical for enterprise use cases — the system not only provides the answer but identifies the **exact location** on the **exact page** of the **exact document** where that information was found.
 
 1. Open the original PDF at **document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf** **(1)** and navigate to the page referenced in the citation to verify the bounding box matches the relevant text.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image11.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image11.png)
 
 ### Task 4: Test chat history and session management
 
@@ -176,7 +176,7 @@ In this task, you will observe how the system maintains conversational context a
      -d '{\"cid\": \"Collection1\", \"sid\": \"session2\", \"query\": \"Tell me about the compliance audit terms in Collection1.\"}'
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image12.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image12.png)
 
 1. Now ask a follow-up question in the **same session** that relies on context:
 
@@ -187,7 +187,7 @@ In this task, you will observe how the system maintains conversational context a
      -d '{\"cid\": \"Collection1\", \"sid\": \"session2\", \"query\": \"What specific obligations does COMPANY have during compliance audits in Collection1?\"}'
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image13.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image13.png)
 
 1. Notice that the LLM builds on the previous conversation context. Because the chat history retains the earlier question about compliance audit terms, the LLM provides a deeper, more focused answer than if this were the first query. This is powered by the **chat history** stored in the Cosmos DB SQL API.
 
@@ -197,7 +197,7 @@ In this task, you will observe how the system maintains conversational context a
 
 1. Expand **knowledge-base-db** **(3)** → **chat-history** **(4)** and browse the stored conversation documents. You should see entries for your session with both user messages and assistant responses.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image14.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image14.png)
 
 1. Note that the system has a **20-message limit** per session. After 20 messages, subsequent queries return an HTTP 400 error. Start a new session ID to continue querying.
 
@@ -209,7 +209,7 @@ In this task, you will understand the token optimization technique that reduces 
 
 1. Open **src/services/citation_mapper.py** **(1)** in VS Code.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image15.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image15.png)
 
 1. The `process_json()` method performs citation aliasing:
 
@@ -227,11 +227,11 @@ In this task, you will understand the token optimization technique that reduces 
 
 1. After the LLM generates a response with alias references, the `restore_citations()` method in **collection_kernel_plugin.py** maps them back to real document paths and bounding box coordinates.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image16.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image16.png)
 
 1. Open the file **docs/design/decisions/alias-names-vs-real-citation.md** **(1)** to read the full architecture decision record behind this optimization.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image17.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image17.png)
 
 ### Task 6: Deploy the Function App to Azure
 
@@ -258,7 +258,7 @@ In this task, you will deploy the local Function App code to the Azure Function 
    func azure functionapp publish devdataextwufunc<inject key="DeploymentID" enableCopy="false" /> --python --script-root ./src/
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image18.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image18.png)
 
 1. Wait for the deployment to complete (this may take a few minutes). You should see output ending with:
 
@@ -266,7 +266,7 @@ In this task, you will deploy the local Function App code to the Azure Function 
    Remote build succeeded!
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image19.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image19.png)
 
    > **Note:** The Python v2 deployment does not list individual function URLs in the output. You can find them in the Azure Portal under your Function App's **Functions** blade, or by running:
    > ```
@@ -296,7 +296,7 @@ In this task, you will deploy the local Function App code to the Azure Function 
 
    > **Tip:** The easiest approach is to copy all values from your `local:` section and paste them into the corresponding `dev:` fields. The **secret references** (like `cosmosdb-connection-string`, `open-ai-key`, `ai-foundry-key`) do **not** need to change — they point to the same Key Vault secrets.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image20.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image20.png)
 
 1. After updating the `dev:` section, **redeploy** the Function App so the updated config is included:
 
@@ -317,7 +317,7 @@ In this task, you will verify that the deployed API endpoints are working correc
    curl.exe https://devdataextwufunc<inject key="DeploymentID" enableCopy="false" />.azurewebsites.net/api/v1/health
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image21.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image21.png)
 
 1. Verify all services show as **healthy**. The deployed Function App uses its **managed identity** for authentication to Azure services.
 
@@ -329,7 +329,7 @@ In this task, you will verify that the deployed API endpoints are working correc
      -d @configs/document-extraction-v1.0.json
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image22.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image22.png)
 
 1. Ingest the document to the **deployed** endpoint:
 
@@ -339,7 +339,7 @@ In this task, you will verify that the deployed API endpoints are working correc
      --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image23.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image23.png)
 
 1. Query the deployed endpoint:
 
@@ -350,7 +350,7 @@ In this task, you will verify that the deployed API endpoints are working correc
      -d '{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"Summarize all key terms in Collection1.\"}'
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image24.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image24.png)
 
 1. Verify that the response includes the answer with citations and metrics, confirming the full pipeline works end-to-end in Azure.
 
@@ -360,19 +360,19 @@ In this task, you will use Application Insights to monitor the deployed Function
 
 1. In the Azure Portal, navigate to your **Function App** (`devdataextwu<inject key="DeploymentID" enableCopy="false" />`). In the left menu, click **Settings** **(1)** > **Application Insights** **(2)**, then click the **Application Insights resource name** link **(3)** to open the connected App Insights instance.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image25.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image25.png)
 
    >**Note:** The Function App has its own Application Insights resource (auto-created during deployment). Do not confuse it with the separate App Insights instance used by AI Foundry — make sure you open the one linked to the Function App.
 
 1. Once in the Application Insights resource, click on **Investigate** **(1)** and then **Live Metrics** **(2)** in the left menu to see real-time request rates, response times, and failures.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image26.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image26.png)
 
    >**Note:** If Live Metrics shows "Not available: couldn't connect to your application", send a few requests to the deployed Function App (e.g., hit the health check endpoint) and wait a moment for the connection to establish.
 
 1. Navigate to **Transaction search** **(1)** and search for recent requests to see execution traces for your API calls.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image27.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image27.png)
 
 1. Click on a specific query request to see the end-to-end transaction details:
 
@@ -381,13 +381,13 @@ In this task, you will use Application Insights to monitor the deployed Function
    - Custom events and traces logged by the application
    - Token usage from Azure OpenAI
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image28.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image28.png)
 
 1. Navigate to **Failures** **(1)** to check for any errors. Review failure details and exception messages if present.
 
 1. Navigate to **Performance** **(1)** to view average response times broken down by operation. The query endpoint typically has the highest latency due to the LLM call.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image29.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image29.png)
 
    >**Note:** If you enabled Semantic Kernel telemetry by setting `SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS=true` in the Function App settings, you will also see detailed traces of the Semantic Kernel workflow — including tool calls, prompt/completion content, and token counts.
 
@@ -401,7 +401,7 @@ In this task, you will run the project's unit tests to validate the codebase.
    pip install -r requirements_dev.txt
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image30.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image30.png)
 
 1. Run the test suite:
 
@@ -409,7 +409,7 @@ In this task, you will run the project's unit tests to validate the codebase.
    pytest
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image31.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image31.png)
 
 1. Review the test results. The tests cover:
 
@@ -423,7 +423,7 @@ In this task, you will run the project's unit tests to validate the codebase.
 
 1. All **166 tests** should pass (with some warnings), confirming the codebase is working correctly.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image32.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-05/image32.png)
 
 ## Summary
 

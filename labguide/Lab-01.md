@@ -21,7 +21,7 @@ In this task, you will run a pre-built validation script to confirm that all req
 
 1. On your lab VM desktop, right-click the **Validate-LabSetup.ps1** **(1)** file and select **Run with PowerShell** **(2)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image01.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image01.png)
 
 1. The script checks all required tools automatically. Verify that every item shows **[PASS]** in green:
 
@@ -36,7 +36,7 @@ In this task, you will run a pre-built validation script to confirm that all req
    | VS Code | Any |
    | Lab Repository | Present at `C:\LabFiles` |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image02.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image02.png)
 
    >**Note:** If any item shows **[FAIL]**, contact your lab administrator. All tools have been pre-installed on your lab VM.
 
@@ -46,7 +46,7 @@ In this task, you will open the pre-cloned repository in Visual Studio Code and 
 
 1. On the desktop, double-click the **Visual Studio Code** shortcut. It opens directly into the lab repository at `C:\LabFiles\data-extraction-using-azure-content-understanding`.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image03.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image03.png)
 
 1. In the VS Code **Explorer** panel on the left, review the top-level folder structure:
 
@@ -61,7 +61,7 @@ In this task, you will open the pre-cloned repository in Visual Studio Code and 
    | `deploy.sh` | One-click deployment script |
    | `requirements.txt` | Python package dependencies |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image04.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image04.png)
 
 1. Click on the **src/** **(1)** folder to expand it. This is the main application code:
 
@@ -76,7 +76,7 @@ In this task, you will open the pre-cloned repository in Visual Studio Code and 
    | `services/` | Business logic (CU client, Cosmos DB, LLM manager, blob storage) |
    | `utils/` | Utility functions (citation cleaner, monitoring, singleton) |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image05.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image05.png)
 
 1. Click on the **iac/** **(1)** folder to expand it. Notice the modular Terraform structure with separate modules for each Azure service:
 
@@ -91,7 +91,7 @@ In this task, you will open the pre-cloned repository in Visual Studio Code and 
    | `modules/azure_openai/` | Azure OpenAI deployment (gpt-4o) |
    | `modules/appinsights/` | Application Insights |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image06.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image06.png)
 
 ### Task 3: Review the solution architecture
 
@@ -99,15 +99,15 @@ In this task, you will open the architecture documentation from the repository a
 
 1. In VS Code Explorer, expand the **docs** **(1)** folder and click on **architecture.md** **(2)** to open it.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image07.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image07.png)
 
 1. At the top of the file, you will find the **Table of Contents** listing the three main workflows. Scroll down to the **Proposed system architecture** section.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image08.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image08.png)
 
 1. Notice the **architecture diagram** image reference at line 13: `![architecture diagram](./images/simplified-arch.drawio.png)`. To view the actual diagram, expand the **docs** > **images** **(1)** folder in the Explorer panel and click on **simplified-arch.drawio.png** **(2)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image09.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image09.png)
 
 1. Review the architecture diagram. The solution implements three main workflows:
 
@@ -117,7 +117,7 @@ In this task, you will open the architecture documentation from the repository a
 
    - **Document Ingestion** — PDF documents are submitted for extraction. Azure Content Understanding extracts structured fields with bounding boxes and confidence scores, storing results in Cosmos DB.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image10.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image10.png)
 
 1. Scroll down in **architecture.md** to review the **Document enquiry workflow** sequence diagram written in Mermaid syntax. This flow shows:
 
@@ -145,7 +145,7 @@ In this task, you will review key design decisions and explore the sample config
 
 1. In VS Code Explorer, expand **docs** > **design** > **decisions** **(1)** and click on **content-undestanding-vs-mllm-docint.md** **(2)**. This is an Architecture Decision Record (ADR) explaining why Azure Content Understanding was chosen over alternatives like Document Intelligence.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image11.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image11.png)
 
 1. Review the key advantages of Azure Content Understanding highlighted in the document:
 
@@ -157,7 +157,7 @@ In this task, you will review key design decisions and explore the sample config
 
 1. Navigate back to the Explorer panel. Expand the **configs** **(1)** folder and click on **document-extraction-v1.0.json** **(2)** to open the sample extraction configuration.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image12.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image12.png)
 
 1. Review the configuration structure:
 
@@ -165,11 +165,11 @@ In this task, you will review key design decisions and explore the sample config
    - **collection_rows** — An array defining document types. Each row specifies a `data_type`, a `field_schema` (list of fields to extract), and an `analyzer_id` that maps to an Azure Content Understanding analyzer.
    - **field_schema** — Each field has a `name`, `type` (string, integer, float, etc.), a human-readable `description`, and a `method` (`extract` for CU extraction or `generate` for LLM generation).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image13.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image13.png)
 
 1. Expand the **document_samples** **(1)** folder. Notice the sample PDF — **Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf** **(2)**. This is the lease agreement document you will ingest and query in later exercises.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image14.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-01/image14.png)
 
    >**Note:** In a production scenario, hundreds or thousands of such documents would be ingested automatically via blob storage triggers.
 

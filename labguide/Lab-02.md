@@ -23,7 +23,7 @@ In this task, you will sign in to Azure CLI and select the correct subscription 
 
 1. On the lab VM, open **Windows Terminal** **(1)** from the taskbar or desktop.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image02.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image02.png)
 
 1. Run the following command to sign in to Azure:
 
@@ -35,7 +35,7 @@ In this task, you will sign in to Azure CLI and select the correct subscription 
 
    >**Note:** If you encounter a multi-factor authentication (MFA) error, use `az login --tenant <your-tenant-id>` instead. You can find the tenant ID from the error message.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image03.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image03.png)
 
 1. After successful authentication, you will see a list of subscriptions. Select the subscription you want to use for this lab when prompted.
 
@@ -45,7 +45,7 @@ In this task, you will sign in to Azure CLI and select the correct subscription 
    az account list --output table
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image04.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image04.png)
 
 1. Set the correct subscription for this lab (replace `<your-subscription-id>` with the actual Subscription ID from the table above):
 
@@ -61,7 +61,7 @@ In this task, you will sign in to Azure CLI and select the correct subscription 
 
    Confirm that the **SubscriptionId** and **Name** match your lab subscription.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image05.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image05.png)
 
 ### Task 2: Configure Terraform variables
 
@@ -79,7 +79,7 @@ In this task, you will configure the Terraform variables that control resource n
    copy terraform.tfvars.sample terraform.tfvars
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image06.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image06.png)
 
 1. Open **terraform.tfvars** in VS Code:
 
@@ -110,7 +110,7 @@ In this task, you will configure the Terraform variables that control resource n
 
    Replace `<your-subscription-id>` with your actual Azure Subscription ID (the one you selected in Task 1, Step 4). You can get it by running `az account show --query id -o tsv` in the terminal.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image07.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image07.png)
 
 1. **Save** the file (**Ctrl+S**) and close the editor tab.
 
@@ -123,7 +123,7 @@ In this task, you will configure the Terraform variables that control resource n
    - **usecase_name** — Short name for resource naming.
    - **cognitive_deployments** — Defines the Azure OpenAI model deployment (defaults to `gpt-4o`).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image08.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image08.png)
 
 ### Task 3: Deploy the Azure infrastructure
 
@@ -137,7 +137,7 @@ In this task, you will initialize Terraform, review the deployment plan, and app
 
    Wait for the initialization to complete. You should see the message **"Terraform has been successfully initialized!"**
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image09.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image09.png)
 
 1. Generate the execution plan to preview what resources will be created:
 
@@ -160,7 +160,7 @@ In this task, you will initialize Terraform, review the deployment plan, and app
    | Application Insights | 1 |
    | RBAC role assignments | Multiple |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image10.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image10.png)
 
 1. Apply the Terraform plan to deploy all resources:
 
@@ -168,13 +168,13 @@ In this task, you will initialize Terraform, review the deployment plan, and app
    terraform apply -auto-approve
    ```
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image11.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image11.png)
 
    >**Note:** The deployment typically takes **15–25 minutes** to complete. The AI Hub and Cosmos DB resources take the longest to provision. Do not close the terminal during deployment.
 
 1. Wait for the deployment to complete. When finished, you will see **"Apply complete!"** with the count of resources added.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image12.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image12.png)
 
 1. Take note of any output values displayed at the end — these may include resource names and endpoints needed in later exercises.
 
@@ -188,11 +188,11 @@ In this task, you will navigate to the Azure Portal and verify that all resource
 
 1. In the Azure Portal, search for **Resource groups** **(1)** in the top search bar and select **Resource groups** **(2)**.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image13.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image13.png)
 
 1. Find and click on the resource group named **devdataextwuRg0** **(1)** (or the name matching your Terraform prefix).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image14.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image14.png)
 
 1. Review the list of resources in the resource group. Verify that you see the following:
 
@@ -208,7 +208,7 @@ In this task, you will navigate to the Azure Portal and verify that all resource
    | Storage Account | `devdataextwuSa<inject_random_string>` |
    | Application Insights | `devdataextwuAppi` |
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image15.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image15.png)
 
 1. The Terraform deployment creates the Key Vault but does **not** automatically populate secrets. You need to create them manually. In the terminal, run the following commands to retrieve service keys and store them in Key Vault:
 
@@ -235,7 +235,7 @@ In this task, you will navigate to the Azure Portal and verify that all resource
    - `open-ai-key`
    - `ai-foundry-key`
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image16.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image16.png)
 
 ### Task 5: Explore Azure AI Foundry and Content Understanding
 
@@ -243,11 +243,11 @@ In this task, you will navigate to Azure AI Foundry to understand how Azure Cont
 
 1. In the Azure Portal, go back to your resource group and click on the **Azure AI Foundry** resource (`devdataextwuais0`).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image17.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image17.png)
 
 1. In the left menu, expand **Resource Management** **(1)** and click on **Keys and Endpoint** **(2)**. Note the **KEY 1**, **Location/Region** (`westus`), and the **API endpoint** URL. This endpoint and key will be used by the application to communicate with Azure Content Understanding.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image18.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image18.png)
 
 1. Go back to the resource group and click on the **Azure Open AI** resource for OpenAI (`aoaidevdataextwu`) and click on **Go to foundry portal**.
 
@@ -257,11 +257,11 @@ In this task, you will navigate to Azure AI Foundry to understand how Azure Cont
    - **Version:** `2024-08-06`
    - **Deployment type:** Standard
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image19.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image19.png)
 
 1. Click on the **gpt-4o** , Note the **Endpoint** and **Keys** for the Azure OpenAI resource — you will need these in the next exercise to configure the application.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image20.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image20.png)
 
 ### Task 6: Explore Azure Cosmos DB resources
 
@@ -269,14 +269,14 @@ In this task, you will explore the two Cosmos DB accounts and understand their d
 
 1. In your resource group, click on the **Cosmos DB account** **(1)** with the Mongo API (`devdataextwucosmos0`).
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image21.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image21.png)
 
 1. In the left menu, navigate to **Data Explorer** **(1)**. This Cosmos DB (Mongo API) instance will store:
 
    - **Configurations** collection — Extraction configuration schemas
    - **Documents** collection — Extracted document data with fields, bounding boxes, and confidence scores
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image22.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image22.png)
 
    >**Note:** The database and collections will be created automatically when the application first runs.
 
@@ -284,11 +284,11 @@ In this task, you will explore the two Cosmos DB accounts and understand their d
 
 1. Open **Data Explorer** **(1)**. Notice the **knowledge-base-db** database with the **chat-history** container. This stores conversational query history per user session.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image23.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image23.png)
 
 1. Expand the **knowledge-base-db** database and click on the **chat-history** **(1)** container to reveal its sub-items: **Items**, **Scale & Settings**, **Stored Procedures**, **User Defined Functions**, and **Triggers**. This container stores conversational query history with a partition key of `/id` for efficient lookups by session and user.
 
-   ![](https://raw.githubusercontent.com/KIRANGOWDA/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image24.png)
+   ![](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/Lab-02/image24.png)
 
    >**Note:** The Terraform deployment automatically configures role-based access control (RBAC) for multiple services:
    > - **Cosmos DB SQL API**: Assigns `Cosmos DB Built-in Data Contributor` to both the Function App managed identity and your deploying user.
