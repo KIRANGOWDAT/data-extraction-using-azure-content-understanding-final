@@ -12,7 +12,7 @@ Param (
 )
 
 # ============================================================================
-# Lab VM Setup Script — Data Extraction Using Azure Content Understanding
+# Lab VM Setup Script - Data Extraction Using Azure Content Understanding
 # CloudLabs-compatible: receives parameters from cloudlabsCommon variable
 # ============================================================================
 
@@ -194,7 +194,7 @@ function Create-DesktopShortcuts {
 
     $WshShell = New-Object -ComObject WScript.Shell
 
-    # VS Code → lab folder
+    # VS Code -> lab folder
     $sc1 = $WshShell.CreateShortcut("$desktopPath\Visual Studio Code.lnk")
     $sc1.TargetPath = "C:\Program Files\Microsoft VS Code\Code.exe"
     $sc1.Arguments = "C:\LabFiles\data-extraction-using-azure-content-understanding"
@@ -433,7 +433,7 @@ function Populate-KeyVaultSecrets {
     $openaiName = (az cognitiveservices account list --resource-group $rgName --query "[?kind=='OpenAI'].name" -o tsv)
     $aiServicesName = (az cognitiveservices account list --resource-group $rgName --query "[?kind=='AIServices'].name" -o tsv)
 
-    Write-Log "Discovered resources — KV: $kvName | Cosmos: $cosmosName | OpenAI: $openaiName | AI Services: $aiServicesName"
+    Write-Log "Discovered resources - KV: $kvName | Cosmos: $cosmosName | OpenAI: $openaiName | AI Services: $aiServicesName"
 
     # Cosmos DB MongoDB connection string (contains & chars, must use file)
     if ($cosmosName) {
