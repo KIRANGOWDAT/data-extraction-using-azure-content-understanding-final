@@ -35,7 +35,7 @@
     "Enable-CloudLabsEmbeddedShadow": "[concat(' -adminUsername ', parameters('adminUsername'), ' -trainerUserName \"', parameters('trainerUserName'), '\" -trainerUserPassword \"', parameters('trainerUserPassword'), '\"')]",
     "AzureSubscriptionID": "[subscription().subscriptionId]",
     "AzureTenantID": "[subscription().tenantId]",
-    "location": "[resourceGroup().location]",
+    "location": "swedencentral",
 
     "prefix": "[concat('devde', parameters('DeploymentID'))]",
     "uniqueSuffix": "[take(uniqueString(resourceGroup().id, parameters('DeploymentID')), 5)]",
@@ -70,7 +70,7 @@
     "kvSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
     "cogServicesUserRoleId": "a97b65f3-24c7-4388-baec-2e87135dc908",
     "storageBlobContribRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
-    "cosmosContribRoleId": "5bd9cd88-fe45-4a9b-9de4-1939b2177844",
+    "cosmosContribRoleId": "5bd9cd88-fe45-4216-938b-f97437e15450",
     "cosmosDataContribRoleDefId": "00000000-0000-0000-0000-000000000002"
   },
   "resources": [

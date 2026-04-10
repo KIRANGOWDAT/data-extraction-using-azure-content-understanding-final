@@ -1,0 +1,13 @@
+@AZURE_FUNCTIONS_ENDPOINT_DEV = https://your-function-app.azurewebsites.net/api
+
+@AZURE_FUNCTIONS_ENDPOINT_LOCAL = http://localhost:7071/api
+
+### Send a request to the data extraction /health endpoint for dev
+# @name getHealthDev
+GET {{AZURE_FUNCTIONS_ENDPOINT_DEV}}/v1/health?x-ms-routing-name=dev HTTP/1.1
+Content-Type: application/json
+
+### Send a request to the data extraction /health endpoint local
+# @name getHealthLocal
+GET {{AZURE_FUNCTIONS_ENDPOINT_LOCAL}}/v1/health HTTP/1.1
+Content-Type: application/json

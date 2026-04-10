@@ -141,6 +141,13 @@ function Install-VSCode {
     }
 }
 
+function Install-Terraform {
+    Write-Log "Installing Terraform..."
+    choco install terraform -y
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    Write-Log "Terraform installed."
+}
+
 function Install-DotNet {
     Write-Log "Installing .NET 8.0 SDK..."
     choco install dotnet-8.0-sdk -y
@@ -203,6 +210,13 @@ function Create-DesktopShortcuts {
     $sc3 = $WshShell.CreateShortcut("$desktopPath\Azure Portal.url")
     $sc3.TargetPath = "https://portal.azure.com"
     $sc3.Save()
+
+    # Validate-LabSetup.ps1 on desktop
+    $validateSrc = "C:\LabFiles\data-extraction-using-azure-content-understanding\cloudlabs-setup\Validate-LabSetup.ps1"
+    if (Test-Path $validateSrc) {
+        Copy-Item -Path $validateSrc -Destination "$desktopPath\Validate-LabSetup.ps1" -Force
+        Write-Log "Validate-LabSetup.ps1 copied to desktop."
+    }
 
     Write-Log "Desktop shortcuts created."
 }
@@ -346,6 +360,7 @@ Install-Python
 Install-AzureCLI
 Install-NodeJS
 Install-AzureFunctionsCoreTools
+Install-Terraform
 Install-VSCode
 Install-DotNet
 Install-WindowsTerminal

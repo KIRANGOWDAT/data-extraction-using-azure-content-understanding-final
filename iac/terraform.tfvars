@@ -1,0 +1,6 @@
+subscription_id              = "4dd60a42-8e1f-4d8b-b07a-fae39d4a2973"
+existing_resource_group_name = "tkirangowda15-rg"
+resource_group_location      = "swedencentral"
+resource_group_location_abbr = "sc"
+environment_name             = "dev"
+usecase_name                 = "dext00001"
