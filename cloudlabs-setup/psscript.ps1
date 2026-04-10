@@ -122,12 +122,10 @@ function Install-VSCode {
     Start-Sleep -Seconds 10
     $codePath = "C:\Program Files\Microsoft VS Code\bin\code.cmd"
     if (Test-Path $codePath) {
-        & $codePath --install-extension ms-python.python --force 2>&1 | Out-Null
-        & $codePath --install-extension ms-azuretools.vscode-azurefunctions --force 2>&1 | Out-Null
-        & $codePath --install-extension humao.rest-client --force 2>&1 | Out-Null
-        & $codePath --install-extension ms-python.vscode-pylance --force 2>&1 | Out-Null
-        & $codePath --install-extension ms-vscode.azure-account --force 2>&1 | Out-Null
-        & $codePath --install-extension tomoki1207.pdf --force 2>&1 | Out-Null
+        $exts = @("ms-python.python", "ms-azuretools.vscode-azurefunctions", "humao.rest-client", "ms-python.vscode-pylance", "ms-vscode.azure-account", "tomoki1207.pdf")
+        foreach ($ext in $exts) {
+            Start-Process -FilePath $codePath -ArgumentList "--install-extension $ext --force" -Wait -NoNewWindow -RedirectStandardOutput NUL -RedirectStandardError NUL -ErrorAction SilentlyContinue
+        }
         Write-Log "VS Code extensions installed."
     }
 }
