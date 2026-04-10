@@ -2,56 +2,56 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminUsername": {
-      "type": "string",
-      "defaultValue": "demouser"
-    },
-    "adminPassword": {
-      "type": "securestring"
-    },
-    "AzureUserName": {
-      "type": "string",
-      "defaultValue": ""
-    },
-    "AzurePassword": {
-      "type": "securestring",
-      "defaultValue": ""
-    },
-    "ODLID": {
-      "type": "string",
-      "defaultValue": ""
-    },
-    "DeploymentID": {
-      "type": "string"
-    },
-    "trainerUserName": {
-      "type": "string",
-      "defaultValue": ""
-    },
-    "trainerUserPassword": {
-      "type": "securestring",
-      "defaultValue": ""
-    }
+    "adminUsername": { "type": "string", "defaultValue": "demouser" },
+    "adminPassword": { "type": "securestring" },
+    "AzureUserName": { "type": "string", "defaultValue": "" },
+    "AzurePassword": { "type": "securestring", "defaultValue": "" },
+    "ODLID": { "type": "string", "defaultValue": "" },
+    "DeploymentID": { "type": "string" },
+    "trainerUserName": { "type": "string", "defaultValue": "" },
+    "trainerUserPassword": { "type": "securestring", "defaultValue": "" }
   },
   "variables": {
-    "cloudlabsCommon": "[concat(' -AzureUserName \"', parameters('AzureUserName'), '\" -AzurePassword \"', parameters('AzurePassword'), '\" -AzureTenantID \"', subscription().tenantId, '\" -AzureSubscriptionID \"', subscription().subscriptionId, '\" -ODLID \"', parameters('ODLID'), '\" -DeploymentID \"', parameters('DeploymentID'), '\" -adminPassword \"', parameters('adminPassword'), '\"')]",
-    "Enable-CloudLabsEmbeddedShadow": "[concat(' -adminUsername \"', parameters('adminUsername'), '\" -trainerUserName \"', parameters('trainerUserName'), '\" -trainerUserPassword \"', parameters('trainerUserPassword'), '\"')]",
     "location": "swedencentral",
+    "prefix": "[concat('devde', parameters('DeploymentID'))]",
+    "uniqueSuffix": "[take(uniqueString(resourceGroup().id, parameters('DeploymentID')), 5)]",
+
     "vmName": "[concat('labvm-', parameters('DeploymentID'))]",
     "vmSize": "Standard_D4s_v3",
-    "networkSecurityGroupName": "[concat(variables('vmName'), '-nsg')]",
-    "virtualNetworkName": "labvNet",
+    "nsgName": "[concat(variables('vmName'), '-nsg')]",
+    "vnetName": "labvNet",
     "subnetName": "default",
-    "publicIPAddressName": "[concat(variables('vmName'), '-pip')]",
-    "networkInterfaceName": "[concat(variables('vmName'), '-nic')]",
+    "pipName": "[concat(variables('vmName'), '-pip')]",
+    "nicName": "[concat(variables('vmName'), '-nic')]",
     "osDiskName": "[concat(variables('vmName'), '-osdisk')]",
-    "contributorRoleId": "b24988ac-6180-42a0-ab88-20f7382dd24c"
+
+    "cosmosMongoName": "[concat(variables('prefix'), 'cosmos')]",
+    "cosmosSqlName": "[concat(variables('prefix'), 'cosmoskb')]",
+    "openaiName": "[concat('aoai', variables('prefix'))]",
+    "aiServicesName": "[concat(variables('prefix'), 'ais')]",
+    "kvName": "[concat(variables('prefix'), 'kv')]",
+    "storageName": "[toLower(concat(variables('prefix'), 'sa', variables('uniqueSuffix')))]",
+    "logName": "[concat(variables('prefix'), '-log')]",
+    "appInsName": "[concat(variables('prefix'), 'appins')]",
+    "aspName": "[concat(variables('prefix'), 'asp')]",
+    "funcAppName": "[toLower(concat(variables('prefix'), 'func', variables('uniqueSuffix')))]",
+    "funcMiName": "[concat(variables('funcAppName'), '-identity')]",
+    "aiHubName": "[concat(variables('prefix'), 'aml')]",
+    "aiProjectName": "[concat(variables('prefix'), '-rag-project')]",
+
+    "kvSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
+    "cogServicesUserRoleId": "a97b65f3-24c7-4388-baec-2e87135dc908",
+    "storageBlobContribRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+    "docDbContribRoleId": "5bd9cd88-fe45-4216-938b-f97437e15450",
+
+    "cloudlabsCommon": "[concat(' -AzureUserName \"', parameters('AzureUserName'), '\" -AzurePassword \"', parameters('AzurePassword'), '\" -AzureTenantID \"', subscription().tenantId, '\" -AzureSubscriptionID \"', subscription().subscriptionId, '\" -ODLID \"', parameters('ODLID'), '\" -DeploymentID \"', parameters('DeploymentID'), '\" -adminPassword \"', parameters('adminPassword'), '\"')]",
+    "Enable-CloudLabsEmbeddedShadow": "[concat(' -adminUsername \"', parameters('adminUsername'), '\" -trainerUserName \"', parameters('trainerUserName'), '\" -trainerUserPassword \"', parameters('trainerUserPassword'), '\"')]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2023-04-01",
-      "name": "[variables('networkSecurityGroupName')]",
+      "name": "[variables('nsgName')]",
       "location": "[variables('location')]",
       "properties": {
         "securityRules": [
@@ -74,10 +74,10 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2023-04-01",
-      "name": "[variables('virtualNetworkName')]",
+      "name": "[variables('vnetName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
       "properties": {
         "addressSpace": { "addressPrefixes": [ "10.0.0.0/16" ] },
@@ -87,7 +87,7 @@
             "properties": {
               "addressPrefix": "10.0.0.0/24",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
             }
           }
@@ -97,24 +97,22 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2023-04-01",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[variables('pipName')]",
       "location": "[variables('location')]",
       "sku": { "name": "Standard" },
       "properties": {
         "publicIPAllocationMethod": "Static",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('vmName')]"
-        }
+        "dnsSettings": { "domainNameLabel": "[variables('vmName')]" }
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-04-01",
-      "name": "[variables('networkInterfaceName')]",
+      "name": "[variables('nicName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -122,10 +120,10 @@
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
               }
             }
           }
@@ -137,11 +135,8 @@
       "apiVersion": "2023-07-01",
       "name": "[variables('vmName')]",
       "location": "[variables('location')]",
-      "identity": {
-        "type": "SystemAssigned"
-      },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": { "vmSize": "[variables('vmSize')]" },
@@ -165,24 +160,9 @@
         },
         "networkProfile": {
           "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
-            }
+            { "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]" }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2022-04-01",
-      "name": "[guid(resourceGroup().id, variables('vmName'), 'contributor')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ],
-      "properties": {
-        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('contributorRoleId'))]",
-        "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2023-07-01', 'Full').identity.principalId]",
-        "principalType": "ServicePrincipal"
       }
     },
     {
@@ -190,10 +170,8 @@
       "apiVersion": "2023-07-01",
       "name": "[concat(variables('vmName'), '/winExtension')]",
       "location": "[variables('location')]",
-      "tags": { "displayName": "VM Extension" },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
-        "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('vmName'), 'contributor'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -228,6 +206,496 @@
         "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
         "notificationSettings": { "status": "Disabled" }
       }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[variables('funcMiName')]",
+      "location": "[variables('location')]"
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2024-05-15",
+      "name": "[variables('cosmosMongoName')]",
+      "location": "[variables('location')]",
+      "kind": "MongoDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": { "defaultConsistencyLevel": "Session" },
+        "locations": [
+          {
+            "locationName": "[variables('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "apiProperties": { "serverVersion": "4.2" },
+        "enableAutomaticFailover": false
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(variables('cosmosMongoName'), '/data-extraction-db')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosMongoName'))]"
+      ],
+      "properties": {
+        "resource": { "id": "data-extraction-db" }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(variables('cosmosMongoName'), '/data-extraction-db/Documents')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', variables('cosmosMongoName'), 'data-extraction-db')]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "Documents",
+          "shardKey": { "domain": "Hash" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(variables('cosmosMongoName'), '/data-extraction-db/Configurations')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', variables('cosmosMongoName'), 'data-extraction-db')]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "Configurations",
+          "shardKey": { "domain": "Hash" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2024-05-15",
+      "name": "[variables('cosmosSqlName')]",
+      "location": "[variables('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": { "defaultConsistencyLevel": "Session" },
+        "locations": [
+          {
+            "locationName": "[variables('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "enableAutomaticFailover": false
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(variables('cosmosSqlName'), '/knowledge-base-db')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosSqlName'))]"
+      ],
+      "properties": {
+        "resource": { "id": "knowledge-base-db" }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(variables('cosmosSqlName'), '/knowledge-base-db/chat-history')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('cosmosSqlName'), 'knowledge-base-db')]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "chat-history",
+          "partitionKey": {
+            "paths": [ "/user_id", "/domain" ],
+            "kind": "MultiHash",
+            "version": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2024-10-01",
+      "name": "[variables('openaiName')]",
+      "location": "[variables('location')]",
+      "kind": "OpenAI",
+      "sku": { "name": "S0" },
+      "properties": {
+        "customSubDomainName": "[variables('openaiName')]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2024-10-01",
+      "name": "[concat(variables('openaiName'), '/gpt-4o')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))]"
+      ],
+      "sku": {
+        "name": "GlobalStandard",
+        "capacity": 10
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "gpt-4o",
+          "version": "2024-08-06"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2024-10-01",
+      "name": "[variables('aiServicesName')]",
+      "location": "[variables('location')]",
+      "kind": "CognitiveServices",
+      "sku": { "name": "S0" },
+      "properties": {
+        "customSubDomainName": "[variables('aiServicesName')]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('kvName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": { "family": "A", "name": "standard" },
+        "enableRbacAuthorization": true,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 7,
+        "enabledForTemplateDeployment": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[concat(variables('kvName'), '/cosmosdb-connection-string')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosMongoName'))]"
+      ],
+      "properties": {
+        "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosMongoName')), '2024-05-15').connectionStrings[0].connectionString]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[concat(variables('kvName'), '/open-ai-key')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))]"
+      ],
+      "properties": {
+        "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName')), '2024-10-01').key1]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[concat(variables('kvName'), '/ai-foundry-key')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+      ],
+      "properties": {
+        "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-10-01').key1]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[variables('storageName')]",
+      "location": "[variables('location')]",
+      "kind": "StorageV2",
+      "sku": { "name": "Standard_LRS" },
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-01-01",
+      "name": "[concat(variables('storageName'), '/default/processed')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ],
+      "properties": { "publicAccess": "None" }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[variables('logName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "sku": { "name": "PerGB2018" },
+        "retentionInDays": 30
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('appInsName')]",
+      "location": "[variables('location')]",
+      "kind": "web",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logName'))]"
+      ],
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-01-01",
+      "name": "[variables('aspName')]",
+      "location": "[variables('location')]",
+      "kind": "linux",
+      "sku": { "name": "Y1", "tier": "Dynamic" },
+      "properties": { "reserved": true }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-01-01",
+      "name": "[variables('funcAppName')]",
+      "location": "[variables('location')]",
+      "kind": "functionapp,linux",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]": {}
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('appInsName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosMongoName'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosSqlName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "reserved": true,
+        "siteConfig": {
+          "linuxFxVersion": "python|3.12",
+          "appSettings": [
+            { "name": "AzureWebJobsStorage", "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2023-01-01').keys[0].value, ';EndpointSuffix=core.windows.net')]" },
+            { "name": "FUNCTIONS_EXTENSION_VERSION", "value": "~4" },
+            { "name": "FUNCTIONS_WORKER_RUNTIME", "value": "python" },
+            { "name": "APPINSIGHTS_INSTRUMENTATIONKEY", "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsName'))).InstrumentationKey]" },
+            { "name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsName'))).ConnectionString]" },
+            { "name": "ENVIRONMENT", "value": "dev" },
+            { "name": "APP_CLIENT_ID", "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).clientId]" },
+            { "name": "APP_TENANT_ID", "value": "[subscription().tenantId]" },
+            { "name": "KEY_VAULT_URI", "value": "[concat('https://', variables('kvName'), '.vault.azure.net/')]" },
+            { "name": "COSMOS_DB_URI", "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosMongoName'))).documentEndpoint]" },
+            { "name": "COSMOS_DB_NAME", "value": "data-extraction-db" },
+            { "name": "COSMOS_SQL_URI", "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosSqlName'))).documentEndpoint]" },
+            { "name": "COSMOS_SQL_DB_NAME", "value": "knowledge-base-db" },
+            { "name": "AOAI_ENDPOINT", "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))).endpoint]" },
+            { "name": "AOAI_MODEL_DEPLOYMENT_NAME", "value": "gpt-4o" },
+            { "name": "AI_SERVICES_ENDPOINT", "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))).endpoint]" },
+            { "name": "STORAGE_ACCOUNT_NAME", "value": "[variables('storageName')]" },
+            { "name": "STORAGE_CONTAINER_NAME", "value": "processed" }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('funcMiName'), variables('kvSecretsUserRoleId'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('kvSecretsUserRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('funcMiName'), variables('cogServicesUserRoleId'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('cogServicesUserRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('funcMiName'), variables('storageBlobContribRoleId'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobContribRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('funcMiName'), variables('docDbContribRoleId'), 'mongo')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('docDbContribRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2024-05-15",
+      "name": "[concat(variables('cosmosSqlName'), '/', guid(resourceGroup().id, variables('funcMiName'), 'cosmosSqlDataContrib'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosSqlName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', variables('cosmosSqlName'), '00000000-0000-0000-0000-000000000002')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
+        "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosSqlName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('aiHubName')]",
+      "location": "[variables('location')]",
+      "kind": "Hub",
+      "identity": { "type": "SystemAssigned" },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('appInsName'))]"
+      ],
+      "properties": {
+        "friendlyName": "[variables('aiHubName')]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "keyVault": "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
+        "applicationInsights": "[resourceId('Microsoft.Insights/components', variables('appInsName'))]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('aiProjectName')]",
+      "location": "[variables('location')]",
+      "kind": "Project",
+      "identity": { "type": "SystemAssigned" },
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]"
+      ],
+      "properties": {
+        "friendlyName": "[variables('aiProjectName')]",
+        "hubResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/connections",
+      "apiVersion": "2024-04-01",
+      "name": "[concat(variables('aiHubName'), '/openai-connection')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))]"
+      ],
+      "properties": {
+        "category": "AzureOpenAI",
+        "target": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))).endpoint]",
+        "authType": "AAD",
+        "metadata": {
+          "ApiType": "Azure",
+          "ResourceId": "[resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/connections",
+      "apiVersion": "2024-04-01",
+      "name": "[concat(variables('aiHubName'), '/aiservices-connection_aoai')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+      ],
+      "properties": {
+        "category": "AzureOpenAI",
+        "target": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))).endpoint]",
+        "authType": "AAD",
+        "metadata": {
+          "ApiType": "Azure",
+          "ResourceId": "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/connections",
+      "apiVersion": "2024-04-01",
+      "name": "[concat(variables('aiHubName'), '/aiservices-connection')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+      ],
+      "properties": {
+        "category": "AIServices",
+        "target": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))).endpoint]",
+        "authType": "AAD",
+        "metadata": {
+          "ApiType": "Azure",
+          "ResourceId": "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+        }
+      }
     }
-  ]
+  ],
+  "outputs": {
+    "vmDnsName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))).dnsSettings.fqdn]"
+    },
+    "funcAppUrl": {
+      "type": "string",
+      "value": "[concat('https://', variables('funcAppName'), '.azurewebsites.net')]"
+    },
+    "kvUri": {
+      "type": "string",
+      "value": "[concat('https://', variables('kvName'), '.vault.azure.net/')]"
+    },
+    "openaiEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName'))).endpoint]"
+    },
+    "aiServicesEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))).endpoint]"
+    }
+  }
 }
