@@ -321,6 +321,20 @@ Install-WindowsTerminal
 Write-Log "Phase 3: Cloning repository..."
 Clone-LabRepository
 
+Write-Log "Phase 3.5: Cleaning up unnecessary files from repository..."
+$repoRoot = "C:\LabFiles\data-extraction-using-azure-content-understanding"
+$foldersToRemove = @(".devcontainer", ".github", ".vscode", "cloudlabs-setup", "docs", "iac", "labguide", "media", "tests")
+$filesToRemove = @("deploy.sh", "requirements_dev.txt", "pytest.ini", ".flake8", ".gitattributes")
+foreach ($folder in $foldersToRemove) {
+    $path = Join-Path $repoRoot $folder
+    if (Test-Path $path) { Remove-Item -Path $path -Recurse -Force; Write-Log "Removed $folder/" }
+}
+foreach ($file in $filesToRemove) {
+    $path = Join-Path $repoRoot $file
+    if (Test-Path $path) { Remove-Item -Path $path -Force; Write-Log "Removed $file" }
+}
+Write-Log "Repository cleanup complete."
+
 Write-Log "Phase 4: Configuring user experience..."
 Create-DesktopShortcuts
 Set-BlackDesktopBackground
