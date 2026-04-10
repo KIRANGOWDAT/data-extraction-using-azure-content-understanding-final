@@ -119,15 +119,7 @@ function Install-VSCode {
     Write-Log "Installing Visual Studio Code..."
     choco install vscode -y --params "/NoDesktopIcon" --no-progress 2>&1 | Out-Null
     Refresh-Path
-    Start-Sleep -Seconds 10
-    $codePath = "C:\Program Files\Microsoft VS Code\bin\code.cmd"
-    if (Test-Path $codePath) {
-        $exts = @("ms-python.python", "ms-azuretools.vscode-azurefunctions", "humao.rest-client", "ms-python.vscode-pylance", "ms-vscode.azure-account", "tomoki1207.pdf")
-        foreach ($ext in $exts) {
-            Start-Process -FilePath $codePath -ArgumentList "--install-extension $ext --force" -Wait -NoNewWindow -RedirectStandardOutput NUL -RedirectStandardError NUL -ErrorAction SilentlyContinue
-        }
-        Write-Log "VS Code extensions installed."
-    }
+    Write-Log "VS Code installed."
 }
 
 function Install-DotNet {
@@ -310,8 +302,6 @@ Install-NodeJS
 Install-AzureFunctionsCoreTools
 Install-Terraform
 Install-VSCode
-Install-DotNet
-Install-WindowsTerminal
 
 Write-Log "Phase 3: Cloning repository..."
 Clone-LabRepository
