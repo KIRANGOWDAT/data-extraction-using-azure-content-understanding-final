@@ -11,13 +11,14 @@ Param (
     [string]$trainerUserPassword
 )
 
-Start-Transcript -Path "C:\WindowsAzure\Logs\LabSetup.log" -Append -Force
 $ErrorActionPreference = "SilentlyContinue"
+$script:LogFile = "C:\WindowsAzure\Logs\LabSetup.log"
+New-Item -ItemType Directory -Path (Split-Path $script:LogFile) -Force *>$null
 
 function Write-Log {
     param([string]$Message)
     $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Output "[$ts] $Message"
+    Add-Content -Path $script:LogFile -Value "[$ts] $Message" -Force
 }
 
 Write-Log "========================================"
@@ -49,8 +50,8 @@ function Enable-LongPaths {
 }
 
 function Set-WindowsFirewallRules {
-    New-NetFirewallRule -DisplayName "Allow Azure Functions Port 7071" -Direction Inbound -LocalPort 7071 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
-    New-NetFirewallRule -DisplayName "Allow HTTPS 443" -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
+    New-NetFirewallRule -DisplayName "Allow Azure Functions Port 7071" -Direction Inbound -LocalPort 7071 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue *>$null
+    New-NetFirewallRule -DisplayName "Allow HTTPS 443" -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue *>$null
 }
 
 # ============================================================================
@@ -61,7 +62,7 @@ function Install-Chocolatey {
     Write-Log "Installing Chocolatey..."
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     Set-ExecutionPolicy Bypass -Scope Process -Force
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) 2>&1 | Out-Null
+    & { Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) } *>$null
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     choco feature enable -n allowGlobalConfirmation 2>&1 | Out-Null
     Write-Log "Chocolatey installed."
@@ -260,11 +261,11 @@ function Set-BlackDesktopBackground {
     $ntUserDat = "C:\Users\$adminUsername\NTUSER.DAT"
     if (Test-Path $ntUserDat) {
         try {
-            reg load "HKU\TempUser" $ntUserDat 2>$null
-            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
-            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
-            reg add "HKU\TempUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
-            reg unload "HKU\TempUser" 2>$null
+            reg load "HKU\TempUser" $ntUserDat *>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f *>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f *>$null
+            reg add "HKU\TempUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f *>$null
+            reg unload "HKU\TempUser" *>$null
         } catch { Write-Log "Could not load user hive for wallpaper: $_" }
     }
 
@@ -272,11 +273,11 @@ function Set-BlackDesktopBackground {
     $defaultNtUser = "C:\Users\Default\NTUSER.DAT"
     if (Test-Path $defaultNtUser) {
         try {
-            reg load "HKU\DefaultUser" $defaultNtUser 2>$null
-            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
-            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
-            reg add "HKU\DefaultUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
-            reg unload "HKU\DefaultUser" 2>$null
+            reg load "HKU\DefaultUser" $defaultNtUser *>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f *>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f *>$null
+            reg add "HKU\DefaultUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f *>$null
+            reg unload "HKU\DefaultUser" *>$null
         } catch { Write-Log "Could not set default profile wallpaper: $_" }
     }
 
@@ -342,7 +343,5 @@ Write-Log "========================================"
 Write-Log "Lab VM Setup COMPLETE!"
 Write-Log "========================================"
 
-Stop-Transcript
-
 $completionTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force
+New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force *>$null
