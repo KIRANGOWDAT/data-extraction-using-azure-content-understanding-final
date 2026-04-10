@@ -356,7 +356,7 @@
       "apiVersion": "2024-10-01",
       "name": "[variables('aiServicesName')]",
       "location": "[variables('location')]",
-      "kind": "CognitiveServices",
+      "kind": "AIServices",
       "sku": { "name": "S0" },
       "properties": {
         "customSubDomainName": "[variables('aiServicesName')]",
