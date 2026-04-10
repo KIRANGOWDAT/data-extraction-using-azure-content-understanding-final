@@ -208,6 +208,11 @@ function Suppress-WindowsIntroPages {
     if (-not (Test-Path $oobePath)) { New-Item -Path $oobePath -Force | Out-Null }
     Set-ItemProperty -Path $oobePath -Name "DisablePrivacyExperience" -Value 1 -Type DWord
     Set-ItemProperty -Path $oobePath -Name "SkipMachineOOBE" -Value 1 -Type DWord
+    Set-ItemProperty -Path $oobePath -Name "SkipUserOOBE" -Value 1 -Type DWord
+    # Suppress user privacy settings page for all users
+    $userOobePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE"
+    if (-not (Test-Path $userOobePath)) { New-Item -Path $userOobePath -Force | Out-Null }
+    Set-ItemProperty -Path $userOobePath -Name "DisablePrivacyExperience" -Value 1 -Type DWord
     $smRegPath = "HKLM:\SOFTWARE\Microsoft\ServerManager"
     if (Test-Path $smRegPath) { Set-ItemProperty -Path $smRegPath -Name "DoNotOpenServerManagerAtLogon" -Value 1 -Type DWord }
     $cloudContentPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
@@ -247,6 +252,47 @@ function Set-AutoLogon {
     Set-ItemProperty -Path $regPath -Name "DefaultPassword" -Value $Password
 }
 
+function Set-BlackDesktopBackground {
+    # Set solid black wallpaper for the admin user
+    $wallpaperRegPath = "HKU:\.DEFAULT\Control Panel\Desktop"
+    try {
+        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaper" -Value "" -Force
+        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaperStyle" -Value "0" -Force
+    } catch { Write-Log "Could not set default user wallpaper: $_" }
+
+    # Set for current user profile via NTUSER.DAT
+    $ntUserDat = "C:\Users\$adminUsername\NTUSER.DAT"
+    if (Test-Path $ntUserDat) {
+        try {
+            reg load "HKU\TempUser" $ntUserDat 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
+            reg unload "HKU\TempUser" 2>$null
+        } catch { Write-Log "Could not load user hive for wallpaper: $_" }
+    }
+
+    # Also set via Default user profile so any new logon inherits black background
+    $defaultNtUser = "C:\Users\Default\NTUSER.DAT"
+    if (Test-Path $defaultNtUser) {
+        try {
+            reg load "HKU\DefaultUser" $defaultNtUser 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
+            reg unload "HKU\DefaultUser" 2>$null
+        } catch { Write-Log "Could not set default profile wallpaper: $_" }
+    }
+
+    # Remove any Windows Spotlight / theme wallpaper policies
+    $personalizePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
+    if (-not (Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
+    Set-ItemProperty -Path $personalizePath -Name "LockScreenImage" -Value "" -Force
+    Set-ItemProperty -Path $personalizePath -Name "NoChangingLockScreen" -Value 1 -Type DWord -Force
+
+    Write-Log "Desktop background set to solid black."
+}
+
 # ============================================================================
 #  MAIN EXECUTION
 # ============================================================================
@@ -277,6 +323,7 @@ Clone-LabRepository
 
 Write-Log "Phase 4: Configuring user experience..."
 Create-DesktopShortcuts
+Set-BlackDesktopBackground
 if ($adminPassword -ne "") {
     Set-AutoLogon -Username $adminUsername -Password $adminPassword
 }
