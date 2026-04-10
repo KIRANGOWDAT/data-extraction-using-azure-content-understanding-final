@@ -37,6 +37,8 @@ In this task, you will deploy the Function App to Azure using Azure Functions Co
 
    >**Note:** The output should show a name like **devde<inject key="DeploymentID" enableCopy="false" />func****** where the suffix is a random 5-character string. You will use `$funcApp` in subsequent commands.
 
+   ![](../media/Lab-04/image01.png)
+
 1. Copy the **requirements.txt** file into the `src/` directory so the Azure Functions deployment can find it:
 
    ```
@@ -54,6 +56,8 @@ In this task, you will deploy the Function App to Azure using Azure Functions Co
    ```
    Remote build succeeded!
    ```
+
+   ![](../media/Lab-04/image02.png)
 
 ### Task 2: Configure the deployed application
 
@@ -76,6 +80,8 @@ In this task, you will update the application configuration for the deployed env
 
    >**Tip:** The easiest approach is to copy all values from your `local:` section and paste them into the corresponding `dev:` fields. The **secret references** (like **cosmosdb-connection-string**, **open-ai-key**, **ai-foundry-key**) do **not** need to change — they point to the same Key Vault secrets.
 
+   ![](../media/Lab-04/image03.png)
+
 1. Save the file and **redeploy** the Function App so the updated config is included:
 
    ```
@@ -84,6 +90,8 @@ In this task, you will update the application configuration for the deployed env
    ```
 
    Wait for the deployment to complete before testing.
+
+   ![](../media/Lab-04/image04.png)
 
 ### Task 3: Test the deployed endpoints
 
@@ -96,6 +104,8 @@ In this task, you will test all the deployed API endpoints to verify the full ex
    ```
 
 1. Verify all services show as **healthy**. The deployed Function App uses its **system-assigned managed identity** for authentication to Azure services instead of user credentials.
+
+   ![](../media/Lab-04/image05.png)
 
 1. Upload the extraction configuration to the **deployed** endpoint:
 
@@ -124,6 +134,8 @@ In this task, you will test all the deployed API endpoints to verify the full ex
 
 1. Verify that the response includes the answer with citations, confirming the full pipeline works end-to-end in Azure.
 
+   ![](../media/Lab-04/image06.png)
+
 ### Task 4: Monitor with Application Insights
 
 In this task, you will use Application Insights to monitor the deployed Function App's performance.
@@ -131,6 +143,8 @@ In this task, you will use Application Insights to monitor the deployed Function
 1. In the Azure Portal, navigate to your **Function App** (the name you captured in the `$funcApp` variable). In the left menu, click **Settings** > **Application Insights**, then click the **Application Insights resource name** link to open the connected App Insights instance.
 
    >**Note:** The Function App has its own Application Insights resource (auto-created during deployment). Make sure you open the one linked to the Function App.
+
+   ![](../media/Lab-04/image07.png)
 
 1. Once in the Application Insights resource, click on **Investigate** > **Live Metrics** in the left menu to see real-time request rates, response times, and failures.
 
@@ -145,7 +159,11 @@ In this task, you will use Application Insights to monitor the deployed Function
 
 1. Observe the Live Metrics dashboard update in real-time — you should see the incoming request, the response time, and the dependency calls to Cosmos DB and Azure OpenAI.
 
+   ![](../media/Lab-04/image08.png)
+
 1. Navigate to **Investigate** > **Transaction search** in the left menu. Click **See all data in the last 24 hours** to view the recent requests.
+
+   ![](../media/Lab-04/image09.png)
 
 1. Click on one of the query requests to open the **end-to-end transaction details**. This view shows the complete request lifecycle:
 
@@ -155,6 +173,8 @@ In this task, you will use Application Insights to monitor the deployed Function
    - Response time breakdown for each component
 
    >**Why is this useful?** Application Insights lets you identify bottlenecks in the extraction pipeline. If Content Understanding extraction is slow, you'll see it in the dependency timing. If the LLM response takes too long, you can identify that separately. This is critical for production monitoring.
+
+   ![](../media/Lab-04/image10.png)
 
 ## Summary
 

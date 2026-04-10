@@ -24,6 +24,8 @@ In this task, you will navigate to the Azure Portal and explore the resources th
 
 1. In the Azure Portal, click on **Resource groups** in the left navigation menu, then click on your resource group **<inject key="Resource Group Name" enableCopy="false" />**.
 
+   ![](../media/Lab-01/image01.png)
+
 1. Review the list of deployed resources. You should see the following:
 
    | Resource Type | Name Pattern | Purpose |
@@ -37,11 +39,15 @@ In this task, you will navigate to the Azure Portal and explore the resources th
    | Function App | **devde<inject key="DeploymentID" enableCopy="false" />func****** | Hosts the extraction API |
    | Application Insights | **devde<inject key="DeploymentID" enableCopy="false" />appins** | Monitoring and tracing |
 
+   ![](../media/Lab-01/image02.png)
+
 1. Click on the **Key Vault** resource (**devde<inject key="DeploymentID" enableCopy="false" />kv**). In the left menu, click **Objects** > **Secrets**. Verify that three secrets are pre-populated:
 
    - **cosmosdb-connection-string** — Cosmos DB MongoDB connection string
    - **open-ai-key** — Azure OpenAI API key
    - **ai-foundry-key** — AI Services subscription key
+
+   ![](../media/Lab-01/image03.png)
 
    >**Note:** These secrets were automatically stored by the VM setup script. The application reads them at runtime via Key Vault references, so API keys are never hardcoded in configuration files.
 
@@ -51,18 +57,28 @@ In this task, you will explore Azure AI Foundry to understand the Content Unders
 
 1. In your resource group, click on the **AI Services** resource (**devde<inject key="DeploymentID" enableCopy="false" />ais**).
 
+   ![](../media/Lab-01/image04.png)
+
 1. In the left menu, expand **Resource Management** and click on **Keys and Endpoint**. Note the following — you will need these when configuring the application:
 
    - **Endpoint** URL (e.g., https://devde<inject key="DeploymentID" enableCopy="false" />ais.cognitiveservices.azure.com/)
    - **KEY 1** (already stored in Key Vault as **ai-foundry-key**)
 
+   ![](../media/Lab-01/image05.png)
+
    >**Note:** Azure AI Content Understanding is a capability within Azure AI Services. It uses custom **analyzers** to extract structured fields from documents. The analyzers are created programmatically by the application when you upload an extraction configuration.
 
 1. Go back to your resource group and click on the **AI Services** resource again. On the overview page, click **Go to Azure AI Foundry** to open the AI Foundry portal.
 
+   ![](../media/Lab-01/image06.png)
+
 1. In Azure AI Foundry, you should see the project **devde<inject key="DeploymentID" enableCopy="false" />-rag-project** in the left navigation. Click on it.
 
+   ![](../media/Lab-01/image07.png)
+
 1. Note the **Project ID** displayed on the project overview page. Copy this value — you will need it when configuring the application in Task 5.
+
+   ![](../media/Lab-01/image08.png)
 
    >**What is a Content Understanding project?** A project in AI Foundry provides a workspace where Content Understanding analyzers are organized. When the application creates an analyzer, it tags it with this project ID so it appears under this project.
 
@@ -74,17 +90,23 @@ In this task, you will verify the Azure OpenAI model deployment that powers the 
 
 1. On the overview page, click **Go to Azure AI Foundry** (or **Go to Azure OpenAI Studio**).
 
+   ![](../media/Lab-01/image09.png)
+
 1. Navigate to **Deployments** in the left menu. Verify that the **gpt-4o** model is deployed with:
 
    - **Model:** gpt-4o
    - **Version:** 2024-08-06
    - **Deployment type:** Standard
 
+   ![](../media/Lab-01/image10.png)
+
 1. Click on the **gpt-4o** deployment. Note the **Target URI** (endpoint) — it should look like:
 
    ```
    https://aoaidevde<inject key="DeploymentID" enableCopy="false" />.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-04-01-preview
    ```
+
+   ![](../media/Lab-01/image11.png)
 
    >**How does this fit the architecture?** When a user queries extracted data, the application uses **Semantic Kernel** to send the query + extracted document data to this gpt-4o deployment. The LLM formulates a response using the extracted fields as context.
 
@@ -93,6 +115,8 @@ In this task, you will verify the Azure OpenAI model deployment that powers the 
 In this task, you will set up the Python virtual environment required to run the application locally.
 
 1. On the desktop, double-click the **Visual Studio Code** shortcut to open the project.
+
+   ![](../media/Lab-01/image12.png)
 
 1. In VS Code, open a new terminal by clicking **Terminal** > **New Terminal** from the menu bar (or press **Ctrl+`**).
 
@@ -116,6 +140,8 @@ In this task, you will set up the Python virtual environment required to run the
 
    You should see `(.venv)` appear at the beginning of your terminal prompt.
 
+   ![](../media/Lab-01/image13.png)
+
 1. Install the project dependencies:
 
    ```
@@ -123,6 +149,8 @@ In this task, you will set up the Python virtual environment required to run the
    ```
 
    >**Note:** This installs all required Python packages including `azure-functions`, `azure-identity`, `azure-keyvault-secrets`, `azure-cosmos`, `semantic-kernel`, and other dependencies. This may take 2—3 minutes.
+
+   ![](../media/Lab-01/image14.png)
 
 ### Task 5: Configure the application
 
@@ -144,6 +172,8 @@ In this task, you will configure the application with the correct Azure resource
 
    >**Understanding the config structure:** Values with `type: "secret"` (like **open-ai-key**, **ai-foundry-key**, **cosmosdb-connection-string**) are resolved from Key Vault at runtime — you do NOT paste actual keys here. Only the `value:` fields for endpoints need to be updated.
 
+   ![](../media/Lab-01/image15.png)
+
 1. Save the file (**Ctrl+S**).
 
 1. For local development, you also need to sign in to Azure CLI so the application can authenticate to Key Vault and other services:
@@ -162,6 +192,8 @@ In this task, you will configure the application with the correct Azure resource
    ```
    az account set --subscription "<inject key="Subscription ID" enableCopy="true" />"
    ```
+
+   ![](../media/Lab-01/image16.png)
 
 ## Summary
 

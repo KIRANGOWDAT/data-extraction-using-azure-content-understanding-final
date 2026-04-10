@@ -87,17 +87,25 @@ Once you're ready to dive in, your virtual machine and **Lab Guide** will be rig
 
 Your virtual machine is your workhorse throughout the lab. The lab guide is your roadmap to success.
 
+   ![](../media/gettingstarted/image01.png)
+
 ## Exploring Your Lab Resources
 
 To get a better understanding of your lab resources and credentials, navigate to the **Environment** tab.
+
+   ![](../media/gettingstarted/image02.png)
 
 ## Utilizing the Split Window Feature
 
 For convenience, you can open the lab guide in a separate window by selecting the **Split Window** button from the top right corner.
 
+   ![](../media/gettingstarted/image03.png)
+
 ## Managing Your Virtual Machine
 
 Feel free to **Start, Restart, or Stop** your virtual machine as needed from the **Resources** tab. Your experience is in your hands!
+
+   ![](../media/gettingstarted/image04.png)
 
 ## Let's Get Started with Azure Portal
 

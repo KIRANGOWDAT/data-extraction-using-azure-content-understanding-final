@@ -49,6 +49,8 @@ In this task, you will use the query endpoint to ask questions about the data ex
 
    >**How does this work?** The application uses Semantic Kernel with `FunctionChoiceBehavior.Required()`, which forces the LLM to call the `get_collection_data()` plugin function. This function retrieves all extracted fields for the specified collection from Cosmos DB. The LLM then uses this structured data as context to formulate its response — it never makes up information; it only references what was actually extracted.
 
+   ![](../media/Lab-03/image01.png)
+
 1. Try another query about a different extracted field:
 
    ```
@@ -59,6 +61,8 @@ In this task, you will use the query endpoint to ask questions about the data ex
    ```
 
 1. Review the response. Notice that the LLM provides specific termination conditions extracted from the document, with references back to the source.
+
+   ![](../media/Lab-03/image02.png)
 
 ### Task 2: Explore multi-turn conversations
 
@@ -75,6 +79,8 @@ In this task, you will explore how the system maintains conversation context acr
 
 1. Notice that the response builds on the context from previous questions. Because the session ID is the same, the LLM has access to the conversation history and can provide more contextual answers.
 
+   ![](../media/Lab-03/image03.png)
+
 1. Now start a **new session** with a different session ID to see a fresh conversation:
 
    ```
@@ -88,6 +94,8 @@ In this task, you will explore how the system maintains conversation context acr
 
    >**Multi-turn architecture:** Chat history is stored in the **Cosmos DB SQL API** (separate from the MongoDB API used for documents). Each message includes the user query, assistant response, session ID, and user identifier. The system limits chat history to the 20 most recent messages per session to keep the LLM context manageable.
 
+   ![](../media/Lab-03/image04.png)
+
 ### Task 3: Examine chat history in Cosmos DB
 
 In this task, you will examine the conversation history stored in Cosmos DB SQL API.
@@ -95,6 +103,8 @@ In this task, you will examine the conversation history stored in Cosmos DB SQL 
 1. In the Azure Portal, navigate to your **Cosmos DB SQL API account** (**devde<inject key="DeploymentID" enableCopy="false" />cosmoskb**).
 
 1. Open **Data Explorer**. Expand **knowledge-base-db** > **chat-history** and browse the stored documents.
+
+   ![](../media/Lab-03/image05.png)
 
 1. You should see conversation entries for your sessions. Each document contains:
 
@@ -111,6 +121,8 @@ In this task, you will examine the conversation history stored in Cosmos DB SQL 
 
    >**Why separate Cosmos DB accounts?** The MongoDB API account stores extraction configurations and extracted document data — its flexible schema handles nested field arrays, bounding boxes, and confidence scores. The SQL API account stores chat history — simple key-value lookups by session ID with a partition key of `/id` for efficient retrieval.
 
+   ![](../media/Lab-03/image06.png)
+
 ### Task 4: Understand the Semantic Kernel orchestration
 
 In this task, you will examine the code to understand how Semantic Kernel orchestrates the query pipeline.
@@ -125,12 +137,16 @@ In this task, you will examine the code to understand how Semantic Kernel orches
 
    >**Why forced tool calling?** Without `Required()`, the LLM might try to answer from its training data instead of the extracted documents. By forcing tool usage, every response is grounded in actual extracted data from Content Understanding.
 
+   ![](../media/Lab-03/image07.png)
+
 1. Open **src/controllers/ingest_lease_documents_controller.py** and review how the ingestion pipeline:
 
    - Loads the extraction config from Cosmos DB
    - Calls Content Understanding's analyzer via `begin_analyze_data()` with the raw PDF bytes
    - Polls for the result using `poll_result()` (Content Understanding is a long-running async operation)
    - Stores the extracted output in Cosmos DB
+
+   ![](../media/Lab-03/image08.png)
 
 1. Open **src/services/azure_content_understanding_client.py** and review the REST API integration:
 
@@ -140,6 +156,8 @@ In this task, you will examine the code to understand how Semantic Kernel orches
    - **Authentication:** Uses `Ocp-Apim-Subscription-Key` header with the AI Services key
 
    >**Content Understanding API pattern:** All Content Understanding operations are **asynchronous long-running operations (LROs)**. You submit a request, receive an `operation-location` URL in the response headers, and poll that URL until the operation completes. This pattern handles large documents that may take several minutes to process.
+
+   ![](../media/Lab-03/image09.png)
 
 ## Summary
 
