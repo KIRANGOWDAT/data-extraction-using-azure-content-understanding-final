@@ -11,14 +11,13 @@ Param (
     [string]$trainerUserPassword
 )
 
+Start-Transcript -Path "C:\WindowsAzure\Logs\LabSetup.log" -Append -Force
 $ErrorActionPreference = "SilentlyContinue"
-$script:LogFile = "C:\WindowsAzure\Logs\LabSetup.log"
-New-Item -ItemType Directory -Path (Split-Path $script:LogFile) -Force *>$null
 
 function Write-Log {
     param([string]$Message)
     $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -Path $script:LogFile -Value "[$ts] $Message" -Force
+    Write-Output "[$ts] $Message"
 }
 
 Write-Log "========================================"
@@ -62,9 +61,9 @@ function Install-Chocolatey {
     Write-Log "Installing Chocolatey..."
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     Set-ExecutionPolicy Bypass -Scope Process -Force
-    & { Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) } *>$null
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    choco feature enable -n allowGlobalConfirmation 2>&1 | Out-Null
+    choco feature enable -n allowGlobalConfirmation
     Write-Log "Chocolatey installed."
 }
 
@@ -74,14 +73,14 @@ function Refresh-Path {
 
 function Install-Git {
     Write-Log "Installing Git..."
-    choco install git.install --params "/GitAndUnixToolsOnPath /NoShellIntegration" -y --no-progress 2>&1 | Out-Null
+    choco install git.install --params "/GitAndUnixToolsOnPath /NoShellIntegration" -y
     Refresh-Path
     Write-Log "Git installed."
 }
 
 function Install-Python {
     Write-Log "Installing Python 3.12..."
-    choco install python312 --params "/InstallDir:C:\Python312" -y --no-progress 2>&1 | Out-Null
+    choco install python312 --params "/InstallDir:C:\Python312" -y
     Refresh-Path
     & "C:\Python312\python.exe" -m pip install --upgrade pip 2>&1 | Out-Null
     Write-Log "Python 3.12 installed."
@@ -89,42 +88,53 @@ function Install-Python {
 
 function Install-AzureCLI {
     Write-Log "Installing Azure CLI..."
-    choco install azure-cli -y --no-progress 2>&1 | Out-Null
+    choco install azure-cli -y
     Refresh-Path
     Write-Log "Azure CLI installed."
 }
 
 function Install-NodeJS {
     Write-Log "Installing Node.js 18 LTS..."
-    choco install nodejs-lts --version=18.20.4 -y --no-progress 2>&1 | Out-Null
+    choco install nodejs-lts --version=18.20.4 -y
     Refresh-Path
     Write-Log "Node.js 18 installed."
 }
 
 function Install-AzureFunctionsCoreTools {
     Write-Log "Installing Azure Functions Core Tools v4..."
-    choco install azure-functions-core-tools -y --params "'/x64'" --no-progress 2>&1 | Out-Null
+    choco install azure-functions-core-tools -y --params "'/x64'"
     Refresh-Path
     Write-Log "Functions Core Tools installed."
 }
 
 function Install-Terraform {
     Write-Log "Installing Terraform..."
-    choco install terraform -y --no-progress 2>&1 | Out-Null
+    choco install terraform -y
     Refresh-Path
     Write-Log "Terraform installed."
 }
 
 function Install-VSCode {
     Write-Log "Installing Visual Studio Code..."
-    choco install vscode -y --params "/NoDesktopIcon" --no-progress 2>&1 | Out-Null
+    choco install vscode -y --params "/NoDesktopIcon"
     Refresh-Path
+    Start-Sleep -Seconds 10
+    $codePath = "C:\Program Files\Microsoft VS Code\bin\code.cmd"
+    if (Test-Path $codePath) {
+        & $codePath --install-extension ms-python.python --force 2>&1 | Out-Null
+        & $codePath --install-extension ms-azuretools.vscode-azurefunctions --force 2>&1 | Out-Null
+        & $codePath --install-extension humao.rest-client --force 2>&1 | Out-Null
+        & $codePath --install-extension ms-python.vscode-pylance --force 2>&1 | Out-Null
+        & $codePath --install-extension ms-vscode.azure-account --force 2>&1 | Out-Null
+        & $codePath --install-extension tomoki1207.pdf --force 2>&1 | Out-Null
+        Write-Log "VS Code extensions installed."
+    }
     Write-Log "VS Code installed."
 }
 
 function Install-DotNet {
     Write-Log "Installing .NET 8.0 SDK..."
-    choco install dotnet-8.0-sdk -y --no-progress 2>&1 | Out-Null
+    choco install dotnet-8.0-sdk -y
     Refresh-Path
     Write-Log ".NET 8.0 installed."
 }
@@ -302,6 +312,7 @@ Install-NodeJS
 Install-AzureFunctionsCoreTools
 Install-Terraform
 Install-VSCode
+Install-DotNet
 
 Write-Log "Phase 3: Cloning repository..."
 Clone-LabRepository
@@ -331,5 +342,7 @@ Write-Log "========================================"
 Write-Log "Lab VM Setup COMPLETE!"
 Write-Log "========================================"
 
+Stop-Transcript
+
 $completionTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force *>$null
+New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force | Out-Null
