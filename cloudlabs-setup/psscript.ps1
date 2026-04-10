@@ -61,9 +61,9 @@ function Install-Chocolatey {
     Write-Log "Installing Chocolatey..."
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     Set-ExecutionPolicy Bypass -Scope Process -Force
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) 2>&1 | Out-Null
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    choco feature enable -n allowGlobalConfirmation
+    choco feature enable -n allowGlobalConfirmation 2>&1 | Out-Null
     Write-Log "Chocolatey installed."
 }
 
@@ -73,14 +73,14 @@ function Refresh-Path {
 
 function Install-Git {
     Write-Log "Installing Git..."
-    choco install git.install --params "/GitAndUnixToolsOnPath /NoShellIntegration" -y
+    choco install git.install --params "/GitAndUnixToolsOnPath /NoShellIntegration" -y --no-progress 2>&1 | Out-Null
     Refresh-Path
     Write-Log "Git installed."
 }
 
 function Install-Python {
     Write-Log "Installing Python 3.12..."
-    choco install python312 --params "/InstallDir:C:\Python312" -y
+    choco install python312 --params "/InstallDir:C:\Python312" -y --no-progress 2>&1 | Out-Null
     Refresh-Path
     & "C:\Python312\python.exe" -m pip install --upgrade pip 2>&1 | Out-Null
     Write-Log "Python 3.12 installed."
@@ -88,35 +88,35 @@ function Install-Python {
 
 function Install-AzureCLI {
     Write-Log "Installing Azure CLI..."
-    choco install azure-cli -y
+    choco install azure-cli -y --no-progress 2>&1 | Out-Null
     Refresh-Path
     Write-Log "Azure CLI installed."
 }
 
 function Install-NodeJS {
     Write-Log "Installing Node.js 18 LTS..."
-    choco install nodejs-lts --version=18.20.4 -y
+    choco install nodejs-lts --version=18.20.4 -y --no-progress 2>&1 | Out-Null
     Refresh-Path
     Write-Log "Node.js 18 installed."
 }
 
 function Install-AzureFunctionsCoreTools {
     Write-Log "Installing Azure Functions Core Tools v4..."
-    choco install azure-functions-core-tools -y --params "'/x64'"
+    choco install azure-functions-core-tools -y --params "'/x64'" --no-progress 2>&1 | Out-Null
     Refresh-Path
     Write-Log "Functions Core Tools installed."
 }
 
 function Install-Terraform {
     Write-Log "Installing Terraform..."
-    choco install terraform -y
+    choco install terraform -y --no-progress 2>&1 | Out-Null
     Refresh-Path
     Write-Log "Terraform installed."
 }
 
 function Install-VSCode {
     Write-Log "Installing Visual Studio Code..."
-    choco install vscode -y --params "/NoDesktopIcon"
+    choco install vscode -y --params "/NoDesktopIcon" --no-progress 2>&1 | Out-Null
     Refresh-Path
     Start-Sleep -Seconds 10
     $codePath = "C:\Program Files\Microsoft VS Code\bin\code.cmd"
@@ -133,14 +133,14 @@ function Install-VSCode {
 
 function Install-DotNet {
     Write-Log "Installing .NET 8.0 SDK..."
-    choco install dotnet-8.0-sdk -y
+    choco install dotnet-8.0-sdk -y --no-progress 2>&1 | Out-Null
     Refresh-Path
     Write-Log ".NET 8.0 installed."
 }
 
 function Install-WindowsTerminal {
     Write-Log "Installing Windows Terminal..."
-    choco install microsoft-windows-terminal -y
+    choco install microsoft-windows-terminal -y --no-progress 2>&1 | Out-Null
     Write-Log "Windows Terminal installed."
 }
 
@@ -155,9 +155,9 @@ function Clone-LabRepository {
     Refresh-Path
     $gitPath = "C:\Program Files\Git\bin\git.exe"
     if (Test-Path $gitPath) {
-        & $gitPath clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1
+        & $gitPath clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1 | Out-Null
     } else {
-        git clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1
+        git clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1 | Out-Null
     }
     Write-Log "Repository cloned."
 }
@@ -237,10 +237,6 @@ function Create-DesktopShortcuts {
     $sc3 = $WshShell.CreateShortcut("$desktopPath\Azure Portal.url")
     $sc3.TargetPath = "https://portal.azure.com"
     $sc3.Save()
-    $validateSrc = "C:\LabFiles\data-extraction-using-azure-content-understanding\cloudlabs-setup\Validate-LabSetup.ps1"
-    if (Test-Path $validateSrc) {
-        Copy-Item -Path $validateSrc -Destination "$desktopPath\Validate-LabSetup.ps1" -Force
-    }
     Write-Log "Desktop shortcuts created."
 }
 
