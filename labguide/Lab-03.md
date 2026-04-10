@@ -92,7 +92,7 @@ In this task, you will explore how the system maintains conversation context acr
 
 In this task, you will examine the conversation history stored in Cosmos DB SQL API.
 
-1. In the Azure Portal, navigate to your **Cosmos DB SQL API account** (`devde<inject key="DeploymentID" enableCopy="false" />wucosmoskb0`).
+1. In the Azure Portal, navigate to your **Cosmos DB SQL API account** (`devde<inject key="DeploymentID" enableCopy="false" />cosmoskb`).
 
 1. Open **Data Explorer**. Expand **knowledge-base-db** > **chat-history** and browse the stored documents.
 

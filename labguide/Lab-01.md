@@ -28,16 +28,16 @@ In this task, you will navigate to the Azure Portal and explore the resources th
 
    | Resource Type | Name Pattern | Purpose |
    |---|---|---|
-   | Key Vault | `devde<inject key="DeploymentID" enableCopy="false" />wuKv0` | Stores API keys and connection strings |
-   | Azure Cosmos DB (MongoDB) | `devde<inject key="DeploymentID" enableCopy="false" />wucosmos0` | Stores extraction configs and extracted data |
-   | Azure Cosmos DB (SQL) | `devde<inject key="DeploymentID" enableCopy="false" />wucosmoskb0` | Stores chat history |
-   | Azure OpenAI | `aoaidevde<inject key="DeploymentID" enableCopy="false" />wu` | Hosts the gpt-4o model |
-   | AI Services | `devde<inject key="DeploymentID" enableCopy="false" />wuais0` | Azure Content Understanding |
-   | Storage Account | `devde<inject key="DeploymentID" enableCopy="false" />wusa*****` (random suffix) | Stores processed documents |
-   | Function App | `devde<inject key="DeploymentID" enableCopy="false" />wufunc*****` | Hosts the extraction API |
-   | Application Insights | `devde<inject key="DeploymentID" enableCopy="false" />wuAppi` | Monitoring and tracing |
+   | Key Vault | `devde<inject key="DeploymentID" enableCopy="false" />kv` | Stores API keys and connection strings |
+   | Azure Cosmos DB (MongoDB) | `devde<inject key="DeploymentID" enableCopy="false" />cosmos` | Stores extraction configs and extracted data |
+   | Azure Cosmos DB (SQL) | `devde<inject key="DeploymentID" enableCopy="false" />cosmoskb` | Stores chat history |
+   | Azure OpenAI | `aoaidevde<inject key="DeploymentID" enableCopy="false" />` | Hosts the gpt-4o model |
+   | AI Services | `devde<inject key="DeploymentID" enableCopy="false" />ais` | Azure Content Understanding |
+   | Storage Account | `devde<inject key="DeploymentID" enableCopy="false" />sa*****` (random suffix) | Stores processed documents |
+   | Function App | `devde<inject key="DeploymentID" enableCopy="false" />func*****` | Hosts the extraction API |
+   | Application Insights | `devde<inject key="DeploymentID" enableCopy="false" />appins` | Monitoring and tracing |
 
-1. Click on the **Key Vault** resource (`devde<inject key="DeploymentID" enableCopy="false" />wuKv0`). In the left menu, click **Objects** > **Secrets**. Verify that three secrets are pre-populated:
+1. Click on the **Key Vault** resource (`devde<inject key="DeploymentID" enableCopy="false" />kv`). In the left menu, click **Objects** > **Secrets**. Verify that three secrets are pre-populated:
 
    - `cosmosdb-connection-string` — Cosmos DB MongoDB connection string
    - `open-ai-key` — Azure OpenAI API key
@@ -49,18 +49,18 @@ In this task, you will navigate to the Azure Portal and explore the resources th
 
 In this task, you will explore Azure AI Foundry to understand the Content Understanding project that powers document extraction.
 
-1. In your resource group, click on the **AI Services** resource (`devde<inject key="DeploymentID" enableCopy="false" />wuais0`).
+1. In your resource group, click on the **AI Services** resource (`devde<inject key="DeploymentID" enableCopy="false" />ais`).
 
 1. In the left menu, expand **Resource Management** and click on **Keys and Endpoint**. Note the following — you will need these when configuring the application:
 
-   - **Endpoint** URL (e.g., `https://devde<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/`)
+   - **Endpoint** URL (e.g., `https://devde<inject key="DeploymentID" enableCopy="false" />ais.cognitiveservices.azure.com/`)
    - **KEY 1** (already stored in Key Vault as `ai-foundry-key`)
 
    >**Note:** Azure AI Content Understanding is a capability within Azure AI Services. It uses custom **analyzers** to extract structured fields from documents. The analyzers are created programmatically by the application when you upload an extraction configuration.
 
 1. Go back to your resource group and click on the **AI Services** resource again. On the overview page, click **Go to Azure AI Foundry** to open the AI Foundry portal.
 
-1. In Azure AI Foundry, you should see the project **devde<inject key="DeploymentID" enableCopy="false" />wu-rag-project** in the left navigation. Click on it.
+1. In Azure AI Foundry, you should see the project **devde<inject key="DeploymentID" enableCopy="false" />-rag-project** in the left navigation. Click on it.
 
 1. Note the **Project ID** displayed on the project overview page. Copy this value — you will need it when configuring the application in Task 5.
 
@@ -70,7 +70,7 @@ In this task, you will explore Azure AI Foundry to understand the Content Unders
 
 In this task, you will verify the Azure OpenAI model deployment that powers the natural language query interface.
 
-1. Go back to the Azure Portal. In your resource group, click on the **Azure OpenAI** resource (`aoaidevde<inject key="DeploymentID" enableCopy="false" />wu`).
+1. Go back to the Azure Portal. In your resource group, click on the **Azure OpenAI** resource (`aoaidevde<inject key="DeploymentID" enableCopy="false" />`).
 
 1. On the overview page, click **Go to Azure AI Foundry** (or **Go to Azure OpenAI Studio**).
 
@@ -83,7 +83,7 @@ In this task, you will verify the Azure OpenAI model deployment that powers the 
 1. Click on the **gpt-4o** deployment. Note the **Target URI** (endpoint) — it should look like:
 
    ```
-   https://aoaidevde<inject key="DeploymentID" enableCopy="false" />wu.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-04-01-preview
+   https://aoaidevde<inject key="DeploymentID" enableCopy="false" />.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-04-01-preview
    ```
 
    >**How does this fit the architecture?** When a user queries extracted data, the application uses **Semantic Kernel** to send the query + extracted document data to this gpt-4o deployment. The LLM formulates a response using the extracted fields as context.
@@ -134,13 +134,13 @@ In this task, you will configure the application with the correct Azure resource
 
    | Setting | Value |
    |---------|-------|
-   | `key_vault_uri` | `https://devde<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/` |
+   | `key_vault_uri` | `https://devde<inject key="DeploymentID" enableCopy="false" />kv.vault.azure.net/` |
    | `tenant_id` | Your Azure Tenant ID (find it in Azure Portal > Azure Active Directory > Overview) |
-   | `llm.endpoint.value` | `https://aoaidevde<inject key="DeploymentID" enableCopy="false" />wu.openai.azure.com/openai/deployments/gpt-4o` |
-   | `content_understanding.endpoint.value` | `https://devde<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/` |
+   | `llm.endpoint.value` | `https://aoaidevde<inject key="DeploymentID" enableCopy="false" />.openai.azure.com/openai/deployments/gpt-4o` |
+   | `content_understanding.endpoint.value` | `https://devde<inject key="DeploymentID" enableCopy="false" />ais.cognitiveservices.azure.com/` |
    | `content_understanding.project_id.value` | The Project ID you copied from AI Foundry in Task 2 |
-   | `chat_history.endpoint.value` | `https://devde<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
-   | `blob_storage.account_url.value` | Find your Storage Account in the resource group (name starts with `devde<inject key="DeploymentID" enableCopy="false" />wusa`) and copy its **Blob service endpoint** from the **Endpoints** page |
+   | `chat_history.endpoint.value` | `https://devde<inject key="DeploymentID" enableCopy="false" />cosmoskb.documents.azure.com:443/` |
+   | `blob_storage.account_url.value` | Find your Storage Account in the resource group (name starts with `devde<inject key="DeploymentID" enableCopy="false" />sa`) and copy its **Blob service endpoint** from the **Endpoints** page |
 
    >**Understanding the config structure:** Values with `type: "secret"` (like `open-ai-key`, `ai-foundry-key`, `cosmosdb-connection-string`) are resolved from Key Vault at runtime — you do NOT paste actual keys here. Only the `value:` fields for endpoints need to be updated.
 

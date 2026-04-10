@@ -99,13 +99,6 @@ function Install-AzureCLI {
     Write-Log "Azure CLI installed."
 }
 
-function Install-Terraform {
-    Write-Log "Installing Terraform..."
-    choco install terraform -y
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    Write-Log "Terraform installed."
-}
-
 function Install-Git {
     Write-Log "Installing Git..."
     choco install git.install --params "/GitAndUnixToolsOnPath /NoShellIntegration" -y
@@ -140,7 +133,6 @@ function Install-VSCode {
         & $codePath --install-extension ms-azuretools.vscode-azurefunctions --force
         & $codePath --install-extension humao.rest-client --force
         & $codePath --install-extension ms-python.vscode-pylance --force
-        & $codePath --install-extension hashicorp.terraform --force
         & $codePath --install-extension ms-vscode.azure-account --force
         & $codePath --install-extension tomoki1207.pdf --force
         Write-Log "VS Code extensions installed."
@@ -330,154 +322,6 @@ function Set-AutoLogon {
 }
 
 # ============================================================================
-#  DEPLOY AZURE INFRASTRUCTURE (Terraform)
-# ============================================================================
-
-function Get-LocationAbbreviation {
-    param([string]$Location)
-    $map = @{
-        "westus"         = "wu";  "westus2"        = "wu2"; "westus3"        = "wu3"
-        "eastus"         = "eu";  "eastus2"        = "eu2"
-        "centralus"      = "cu";  "southcentralus" = "scu"; "northcentralus" = "ncu"
-        "northeurope"    = "ne";  "westeurope"     = "we"
-        "uksouth"        = "uks"; "ukwest"         = "ukw"
-        "japaneast"      = "je";  "southeastasia"  = "sea"
-        "australiaeast"  = "ae";  "canadacentral"  = "cc"
-        "swedencentral"  = "sc";  "switzerlandnorth" = "swn"
-    }
-    if ($map.ContainsKey($Location)) { return $map[$Location] }
-    return $Location.Substring(0, [Math]::Min(3, $Location.Length))
-}
-
-function Get-VMResourceGroup {
-    Write-Log "Detecting resource group from Azure Instance Metadata Service..."
-    try {
-        $metadata = Invoke-RestMethod -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -Headers @{Metadata="true"} -TimeoutSec 5
-        $rgName = $metadata.compute.resourceGroupName
-        Write-Log "IMDS detected RG: $rgName"
-        return $rgName
-    } catch {
-        Write-Log "WARNING: IMDS not available, falling back to az group list"
-        $rgName = (az group list --query "[0].name" -o tsv)
-        return $rgName
-    }
-}
-
-function Deploy-AzureInfrastructure {
-    Write-Log "Starting Azure infrastructure deployment..."
-
-    # Login to Azure CLI
-    Write-Log "Logging in to Azure CLI..."
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    az login -u $AzureUserName -p $AzurePassword --tenant $AzureTenantID 2>&1 | Out-File "C:\WindowsAzure\Logs\az-login.log" -Append
-    if ($LASTEXITCODE -ne 0) {
-        Write-Log "ERROR: Azure login failed. Terraform deployment skipped."
-        return
-    }
-    az account set --subscription $AzureSubscriptionID
-    Write-Log "Azure login successful."
-
-    # Detect resource group and location (IMDS is reliable at scale)
-    $rgName = Get-VMResourceGroup
-    $location = (az group show --name $rgName --query "location" -o tsv)
-    $locationAbbr = Get-LocationAbbreviation -Location $location
-    Write-Log "Resource Group: $rgName | Location: $location ($locationAbbr)"
-
-    # Create terraform.tfvars
-    $iacPath = "C:\LabFiles\data-extraction-using-azure-content-understanding\iac"
-    $tfvarsContent = @"
-subscription_id              = "$AzureSubscriptionID"
-existing_resource_group_name = "$rgName"
-resource_group_location      = "$location"
-resource_group_location_abbr = "$locationAbbr"
-environment_name             = "dev"
-usecase_name                 = "de$DeploymentID"
-"@
-    Set-Content -Path "$iacPath\terraform.tfvars" -Value $tfvarsContent -Force
-    Write-Log "terraform.tfvars created."
-
-    # Run Terraform
-    Push-Location $iacPath
-    Write-Log "Running terraform init..."
-    terraform init -no-color 2>&1 | Out-File "C:\WindowsAzure\Logs\terraform-init.log" -Append
-    if ($LASTEXITCODE -ne 0) {
-        Write-Log "ERROR: terraform init failed. Check C:\WindowsAzure\Logs\terraform-init.log"
-        Pop-Location
-        return
-    }
-    Write-Log "terraform init completed."
-
-    Write-Log "Running terraform apply (this may take 20-30 minutes)..."
-    terraform apply -auto-approve -no-color 2>&1 | Out-File "C:\WindowsAzure\Logs\terraform-apply.log" -Append
-    if ($LASTEXITCODE -ne 0) {
-        Write-Log "ERROR: terraform apply failed. Check C:\WindowsAzure\Logs\terraform-apply.log"
-        Pop-Location
-        return
-    }
-    Pop-Location
-    Write-Log "Terraform deployment completed successfully."
-}
-
-function Populate-KeyVaultSecrets {
-    Write-Log "Populating Key Vault secrets..."
-
-    $rgName = Get-VMResourceGroup
-    $location = (az group show --name $rgName --query "location" -o tsv)
-    $locationAbbr = Get-LocationAbbreviation -Location $location
-    # Discover actual resource names from the resource group (handles naming patterns reliably)
-    $kvName = (az keyvault list --resource-group $rgName --query "[0].name" -o tsv)
-    $cosmosName = (az cosmosdb list --resource-group $rgName --query "[?contains(name,'cosmos0')].name" -o tsv)
-    $openaiName = (az cognitiveservices account list --resource-group $rgName --query "[?kind=='OpenAI'].name" -o tsv)
-    $aiServicesName = (az cognitiveservices account list --resource-group $rgName --query "[?kind=='AIServices'].name" -o tsv)
-
-    Write-Log "Discovered resources - KV: $kvName | Cosmos: $cosmosName | OpenAI: $openaiName | AI Services: $aiServicesName"
-
-    # Cosmos DB MongoDB connection string (contains & chars, must use file)
-    if ($cosmosName) {
-        $cosmosConn = az cosmosdb keys list --name $cosmosName --resource-group $rgName --type connection-strings --query "connectionStrings[0].connectionString" -o tsv
-        if ($cosmosConn) {
-            Set-Content -Path "$env:TEMP\cosmosconn.txt" -Value $cosmosConn -NoNewline
-            az keyvault secret set --vault-name $kvName --name "cosmosdb-connection-string" --file "$env:TEMP\cosmosconn.txt" 2>&1 | Out-Null
-            Remove-Item "$env:TEMP\cosmosconn.txt" -Force -ErrorAction SilentlyContinue
-            Write-Log "Stored cosmosdb-connection-string in Key Vault."
-        } else {
-            Write-Log "WARNING: Could not retrieve Cosmos DB connection string."
-        }
-    } else {
-        Write-Log "WARNING: Cosmos DB (MongoDB) resource not found."
-    }
-
-    # Azure OpenAI key
-    if ($openaiName) {
-        $openaiKey = az cognitiveservices account keys list --name $openaiName --resource-group $rgName --query "key1" -o tsv
-        if ($openaiKey) {
-            az keyvault secret set --vault-name $kvName --name "open-ai-key" --value $openaiKey 2>&1 | Out-Null
-            Write-Log "Stored open-ai-key in Key Vault."
-        } else {
-            Write-Log "WARNING: Could not retrieve Azure OpenAI key."
-        }
-    } else {
-        Write-Log "WARNING: Azure OpenAI resource not found."
-    }
-
-    # AI Services key
-    if ($aiServicesName) {
-        $aiKey = az cognitiveservices account keys list --name $aiServicesName --resource-group $rgName --query "key1" -o tsv
-        if ($aiKey) {
-            az keyvault secret set --vault-name $kvName --name "ai-foundry-key" --value $aiKey 2>&1 | Out-Null
-            Write-Log "Stored ai-foundry-key in Key Vault."
-        } else {
-            Write-Log "WARNING: Could not retrieve AI Services key."
-        }
-    } else {
-        Write-Log "WARNING: AI Services resource not found."
-    }
-
-    Write-Log "Key Vault secrets populated."
-}
-
-# ============================================================================
-# ============================================================================
 #  MAIN EXECUTION
 # ============================================================================
 
@@ -500,7 +344,6 @@ Install-Chocolatey
 Install-Git
 Install-Python
 Install-AzureCLI
-Install-Terraform
 Install-NodeJS
 Install-AzureFunctionsCoreTools
 Install-VSCode
@@ -509,10 +352,6 @@ Install-WindowsTerminal
 
 # Clone lab repository
 Clone-LabRepository
-
-# Deploy Azure infrastructure (Terraform) and populate secrets
-Deploy-AzureInfrastructure
-Populate-KeyVaultSecrets
 
 # User experience
 Create-DesktopShortcuts

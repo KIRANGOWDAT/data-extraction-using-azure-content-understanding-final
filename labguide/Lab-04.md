@@ -35,7 +35,7 @@ In this task, you will deploy the Function App to Azure using Azure Functions Co
    echo "Your Function App name is: $funcApp"
    ```
 
-   >**Note:** The output should show a name like `devde<inject key="DeploymentID" enableCopy="false" />wufunc*****` where `*****` is a random 5-character suffix. You will use `$funcApp` in subsequent commands.
+   >**Note:** The output should show a name like `devde<inject key="DeploymentID" enableCopy="false" />func*****` where `*****` is a random 5-character suffix. You will use `$funcApp` in subsequent commands.
 
 1. Copy the **requirements.txt** file into the `src/` directory so the Azure Functions deployment can find it:
 
@@ -65,14 +65,14 @@ In this task, you will update the application configuration for the deployed env
 
    | Setting | Value |
    |---------|-------|
-   | `key_vault_uri` | `https://devde<inject key="DeploymentID" enableCopy="false" />wuKv0.vault.azure.net/` |
+   | `key_vault_uri` | `https://devde<inject key="DeploymentID" enableCopy="false" />kv.vault.azure.net/` |
    | `tenant_id` | Your Azure tenant ID (same as `local:`) |
    | `user_managed_identity.client_id` | Leave empty (`""`) — the deployed app uses **system-assigned managed identity** |
-   | `llm.endpoint` | `https://aoaidevde<inject key="DeploymentID" enableCopy="false" />wu.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
-   | `content_understanding.endpoint` | `https://devde<inject key="DeploymentID" enableCopy="false" />wuais0.cognitiveservices.azure.com/` (same as `local:`) |
+   | `llm.endpoint` | `https://aoaidevde<inject key="DeploymentID" enableCopy="false" />.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
+   | `content_understanding.endpoint` | `https://devde<inject key="DeploymentID" enableCopy="false" />ais.cognitiveservices.azure.com/` (same as `local:`) |
    | `content_understanding.project_id` | Your AI Foundry project ID (same as `local:`) |
-   | `chat_history.endpoint` | `https://devde<inject key="DeploymentID" enableCopy="false" />wucosmoskb0.documents.azure.com:443/` |
-   | `blob_storage.account_url` | Find your Storage Account in the resource group (name starts with `devde<inject key="DeploymentID" enableCopy="false" />wusa`) and use its Blob service endpoint |
+   | `chat_history.endpoint` | `https://devde<inject key="DeploymentID" enableCopy="false" />cosmoskb.documents.azure.com:443/` |
+   | `blob_storage.account_url` | Find your Storage Account in the resource group (name starts with `devde<inject key="DeploymentID" enableCopy="false" />sa`) and use its Blob service endpoint |
 
    >**Tip:** The easiest approach is to copy all values from your `local:` section and paste them into the corresponding `dev:` fields. The **secret references** (like `cosmosdb-connection-string`, `open-ai-key`, `ai-foundry-key`) do **not** need to change — they point to the same Key Vault secrets.
 
