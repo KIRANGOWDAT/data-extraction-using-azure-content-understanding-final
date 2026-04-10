@@ -1,73 +1,123 @@
-# Lab 02: Extract Documents Using Azure Content Understanding
+# Lab 02: Configure and Extract Documents Using Content Understanding
 
 ### Estimated Duration: 60 Minutes
 
 ## Overview
 
-In this lab, you will use Azure Content Understanding to extract structured data from documents. You will start the Function App locally, upload an extraction configuration that defines what fields to extract, ingest a sample lease agreement PDF, and examine the extracted results in Azure Cosmos DB.
+In this lab, you will configure the document extraction application with the Azure resource endpoints you explored in Lab 01, start the Function App locally, upload an extraction configuration that creates a Content Understanding analyzer, ingest a sample lease agreement, and examine the extracted results in Azure Cosmos DB.
 
 ## Objectives
 
-After completing this lab, you will have:
+In this lab, you will complete the following tasks:
 
-- Understood the extraction configuration schema and field definitions
-- Started the Function App locally
-- Uploaded an extraction configuration that creates Content Understanding analyzers
-- Ingested a document and extracted structured fields using Content Understanding
-- Examined extracted data in Azure Cosmos DB with confidence scores
+- Task 1: Set up the Python environment
+- Task 2: Configure the application with Azure endpoints
+- Task 3: Start the Function App locally
+- Task 4: Upload the extraction configuration
+- Task 5: Ingest a document and examine extracted data
 
-### Task 1: Review the extraction configuration
+### Task 1: Set up the Python environment
 
-In this task, you will review the extraction configuration JSON file that defines what fields Azure Content Understanding should extract from documents.
+In this task, you will set up the Python virtual environment required to run the application locally.
 
-1. In VS Code, navigate to **configs** folder in the Explorer panel and open **document-extraction-v1.0.json**.
-
-1. Review the configuration structure:
-
-   ```json
-   {
-     "id": "document-extraction-v1.0",
-     "name": "document-extraction",
-     "version": "v1.0",
-     "prompt": "You are a helpful assistant tasked with using the necessary tools...",
-     "collection_rows": [{
-       "data_type": "LeaseAgreement",
-       "field_schema": [
-         {"name": "license_grant_scope", "type": "string", "description": "...", "method": "extract"},
-         {"name": "lease_duration", "type": "string", "description": "...", "method": "extract"},
-         {"name": "termination_conditions", "type": "string", "description": "...", "method": "extract"},
-         {"name": "compliance_audit_terms", "type": "string", "description": "...", "method": "extract"},
-         {"name": "prohibited_uses", "type": "string", "description": "...", "method": "extract"}
-       ],
-       "analyzer_id": "test-analyzer"
-     }]
-   }
-   ```
-
-   >**Understanding the config:**
-   > - **`collection_rows`** — Defines the document types to process. Each row has a `data_type` (e.g., "LeaseAgreement") and a `field_schema`.
-   > - **`field_schema`** — Lists the fields to extract. Each field has a `name`, `type`, `description` (used by Content Understanding as extraction guidance), and `method` (always `"extract"` for field extraction).
-   > - **`analyzer_id`** — The ID for the Content Understanding analyzer that will be created. When you upload this config, the application automatically creates a CU analyzer with this schema.
-   > - **`prompt`** — The system prompt used by the LLM when answering queries about the extracted data.
+1. On the desktop, double-click the **Visual Studio Code** **(1)** shortcut to open the project.
 
    ![](../media/Lab-02/image01.png)
 
-1. Also review the **document_samples** folder. It contains a single PDF: **Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf** — this is the document you will extract data from.
+1. In VS Code, open a new terminal by clicking **Terminal** **(1)** in the menu bar and selecting **New Terminal** **(2)**.
 
    ![](../media/Lab-02/image02.png)
 
-### Task 2: Start the Function App locally
-
-In this task, you will start the Azure Functions application locally so you can interact with the extraction API.
-
-1. In VS Code, open a terminal (**Ctrl+`**) and make sure the virtual environment is activated:
+1. Verify you are in the project root directory. Run the following command:
 
    ```
    cd C:\LabFiles\data-extraction-using-azure-content-understanding
+   ```
+
+   ![](../media/Lab-02/image03.png)
+
+1. Create a Python virtual environment by running the following command:
+
+   ```
+   python -m venv .venv
+   ```
+
+   ![](../media/Lab-02/image04.png)
+
+1. Activate the virtual environment by running the following command:
+
+   ```
    .venv\Scripts\activate
    ```
 
-1. Start the Function App:
+1. You should see `(.venv)` **(1)** appear at the beginning of your terminal prompt, confirming the virtual environment is active.
+
+   ![](../media/Lab-02/image05.png)
+
+1. Install the project dependencies by running the following command:
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+   ![](../media/Lab-02/image06.png)
+
+   >**Note:** This installs all required Python packages including `azure-functions`, `azure-identity`, `azure-keyvault-secrets`, `azure-cosmos`, `semantic-kernel`, and other dependencies. This may take 2–3 minutes.
+
+### Task 2: Configure the application with Azure endpoints
+
+In this task, you will configure the application with the correct Azure resource endpoints so it can connect to Content Understanding, Azure OpenAI, Cosmos DB, and Key Vault.
+
+1. In the VS Code Explorer panel, expand **src** **(1)** > **resources** **(2)** and click on **app_config.yaml** **(3)** to open it.
+
+   ![](../media/Lab-02/image07.png)
+
+1. Scroll down to the `local:` section **(1)**. This is the configuration used when running the Function App locally. Update the following values using the information from Lab 01:
+
+   | Setting | Value |
+   |---------|-------|
+   | `key_vault_uri` | `https://devde<inject key="DeploymentID" enableCopy="false" />kv.vault.azure.net/` |
+   | `tenant_id` | <inject key="TenantID" enableCopy="true" /> |
+   | `llm.endpoint.value` | `https://aoaidevde<inject key="DeploymentID" enableCopy="false" />.openai.azure.com/openai/deployments/gpt-4o` |
+   | `content_understanding.endpoint.value` | The Endpoint URL you copied from the AI Services resource in Lab 01 |
+   | `content_understanding.project_id.value` | The Project ID you copied from AI Foundry in Lab 01 |
+   | `chat_history.endpoint.value` | `https://devde<inject key="DeploymentID" enableCopy="false" />cosmoskb.documents.azure.com:443/` |
+   | `blob_storage.account_url.value` | Navigate to the Storage Account in the portal and copy the **Blob service endpoint** from the **Endpoints** page |
+
+   ![](../media/Lab-02/image08.png)
+
+   >**Note:** Values with `type: "secret"` (like **open-ai-key**, **ai-foundry-key**, **cosmosdb-connection-string**) are resolved from Key Vault at runtime — you do NOT paste actual keys here. Only the `value:` fields for endpoints need to be updated.
+
+1. Press **Ctrl+S** to save the file.
+
+1. For local development, you need to sign in to Azure CLI so the application can authenticate to Key Vault and other services. In the terminal, run the following command:
+
+   ```
+   az login
+   ```
+
+   ![](../media/Lab-02/image09.png)
+
+1. A browser window will open. Sign in with the following credentials:
+
+   - **Email:** <inject key="AzureAdUserEmail"></inject>
+   - **Password:** <inject key="AzureAdUserPassword"></inject>
+
+   ![](../media/Lab-02/image10.png)
+
+1. After successful login, return to VS Code. Set your active subscription by running the following command:
+
+   ```
+   az account set --subscription "<inject key="Subscription ID" enableCopy="true" />"
+   ```
+
+   ![](../media/Lab-02/image11.png)
+
+### Task 3: Start the Function App locally
+
+In this task, you will start the Azure Functions application locally so you can interact with the extraction API.
+
+1. In the VS Code terminal, start the Function App by running the following command:
 
    ```
    func start
@@ -85,32 +135,54 @@ In this task, you will start the Azure Functions application locally so you can 
      health_check: [GET] http://localhost:7071/api/v1/health
    ```
 
-   >**Note:** Keep this terminal running. You will use a separate terminal for the remaining tasks.
+   ![](../media/Lab-02/image12.png)
 
-   ![](../media/Lab-02/image03.png)
+   >**Note:** Keep this terminal running throughout the lab. You will use a separate terminal for the remaining tasks.
 
-1. Open a **second terminal** in VS Code (click the **+** icon in the terminal panel) and activate the virtual environment:
+1. Open a **second terminal** in VS Code by clicking the **+** icon **(1)** in the terminal panel.
+
+   ![](../media/Lab-02/image13.png)
+
+1. In the new terminal, activate the virtual environment and navigate to the project root:
 
    ```
    cd C:\LabFiles\data-extraction-using-azure-content-understanding
    .venv\Scripts\activate
    ```
 
-1. Test the health check endpoint:
+1. Test the health check endpoint by running the following command:
 
    ```
    curl.exe http://localhost:7071/api/v1/health
    ```
 
-   You should see a JSON response showing the status of all connected services (Key Vault, Cosmos DB, OpenAI, Content Understanding, Blob Storage).
+1. You should see a JSON response **(1)** showing the status of all connected services (Key Vault, Cosmos DB, OpenAI, Content Understanding, Blob Storage).
 
-   ![](../media/Lab-02/image04.png)
+   ![](../media/Lab-02/image14.png)
 
-### Task 3: Upload the extraction configuration
+   >**Note:** If any service shows as unhealthy, go back to Task 2 and verify that the corresponding endpoint values are correct in `app_config.yaml`.
+
+### Task 4: Upload the extraction configuration
 
 In this task, you will upload the extraction configuration. This triggers the application to create a **Content Understanding analyzer** with the defined field schema.
 
-1. In the second terminal, upload the extraction configuration:
+1. First, review the extraction configuration file. In VS Code Explorer, click on the **configs** **(1)** folder and open **document-extraction-v1.0.json** **(2)**.
+
+   ![](../media/Lab-02/image15.png)
+
+1. Review the configuration structure. Notice the `field_schema` **(1)** section that defines the 5 fields to extract from documents:
+
+   - **license_grant_scope** — The scope of the license grant
+   - **lease_duration** — Duration terms of the lease
+   - **termination_conditions** — Conditions under which the lease can be terminated
+   - **compliance_audit_terms** — Audit and compliance requirements
+   - **prohibited_uses** — Uses that are explicitly prohibited
+
+   ![](../media/Lab-02/image16.png)
+
+   >**Note:** Each field has a `name`, `type`, `description` (used by Content Understanding as extraction guidance), and `method` set to `"extract"`. The `analyzer_id` is `"test-analyzer"` — this is the ID of the Content Understanding analyzer that will be created when you upload this config.
+
+1. In the second terminal, upload the extraction configuration by running the following command:
 
    ```
    curl.exe -X PUT "http://localhost:7071/api/configs/document-extraction/versions/v1.0" `
@@ -118,31 +190,33 @@ In this task, you will upload the extraction configuration. This triggers the ap
      -d @configs/document-extraction-v1.0.json
    ```
 
-1. Wait for the response (this may take 1–2 minutes). The application is:
+   ![](../media/Lab-02/image17.png)
+
+1. Wait for the response. This may take 1–2 minutes as the application is:
 
    1. Parsing the field schema from the JSON config
-   2. Building a Content Understanding analyzer template with `baseAnalyzerId: prebuilt-documentAnalyzer`
+   2. Building a Content Understanding analyzer template based on `prebuilt-documentAnalyzer`
    3. Calling the Content Understanding REST API to create the analyzer
-   4. Polling the API until the analyzer creation completes
-   5. Storing the configuration in Cosmos DB (MongoDB API)
+   4. Polling until the analyzer creation completes
+   5. Storing the configuration in Cosmos DB
 
    You should see a success response when complete.
 
-   >**What just happened behind the scenes?** The application called `PUT /contentunderstanding/analyzers/test-analyzer` on the Azure AI Content Understanding API. This created a custom analyzer based on the pre-built document analyzer, configured with your 5 field definitions. The analyzer is now ready to extract those specific fields from any document you send it.
+   ![](../media/Lab-02/image18.png)
 
-   ![](../media/Lab-02/image05.png)
+1. Verify the configuration was stored in Cosmos DB. In the Azure Portal, navigate to your **Cosmos DB (MongoDB API)** account **devde<inject key="DeploymentID" enableCopy="false" />cosmos** **(1)**.
 
-1. Verify the configuration was stored in Cosmos DB. Open the **Azure Portal**, navigate to your **Cosmos DB (MongoDB API)** account (**devde<inject key="DeploymentID" enableCopy="false" />cosmos**).
+   ![](../media/Lab-02/image19.png)
 
-1. In the left menu, click **Data Explorer**. Expand **data-extraction-db** > **Configurations** and click **Documents**. You should see the uploaded configuration document with the field schema and a computed `extraction_config_hash` (SHA-256 hash of the field definitions).
+1. In the left menu, click **Data Explorer** **(1)**. Expand **data-extraction-db** **(2)** > **Configurations** **(3)** and click on a document **(4)**. You should see the uploaded configuration with the field schema and a computed `extraction_config_hash`.
 
-   ![](../media/Lab-02/image06.png)
+   ![](../media/Lab-02/image20.png)
 
-### Task 4: Ingest a document using Content Understanding
+### Task 5: Ingest a document and examine extracted data
 
 In this task, you will send a PDF document through the extraction pipeline. Azure Content Understanding will analyze the document and extract the fields you defined.
 
-1. In the second terminal, ingest the sample lease agreement:
+1. In the second terminal, ingest the sample lease agreement by running the following command:
 
    ```
    curl.exe -X POST "http://localhost:7071/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
@@ -150,76 +224,64 @@ In this task, you will send a PDF document through the extraction pipeline. Azur
      --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
 
-   >**Understanding the URL parameters:**
-   > - `Collection1` — The collection ID (groups related documents together)
-   > - `Lease1` — The lease ID (identifies a specific lease within the collection)
-   > - `MicrosoftLeaseAgreement` — The document name
+   ![](../media/Lab-02/image21.png)
 
-1. Wait for the response (this may take 2–3 minutes). The extraction pipeline is:
+   >**Note:** The URL parameters define: `Collection1` (groups related documents), `Lease1` (identifies a specific lease), and `MicrosoftLeaseAgreement` (the document name).
+
+1. Wait for the response. This may take 2–3 minutes. The extraction pipeline is:
 
    1. Loading the extraction configuration from Cosmos DB
-   2. Sending the PDF bytes to Content Understanding's `POST /contentunderstanding/analyzers/test-analyzer:analyze` endpoint
-   3. Polling the operation until the analysis completes
+   2. Sending the PDF to Content Understanding's analyzer endpoint
+   3. Polling until the analysis completes
    4. Receiving structured extraction results with field values, confidence scores, and bounding box coordinates
    5. Storing the results in Cosmos DB and the markdown in Blob Storage
 
-   ![](../media/Lab-02/image07.png)
+   ![](../media/Lab-02/image22.png)
 
-1. Check the Function App terminal (first terminal). You should see log messages showing the extraction progress, including the Content Understanding API calls.
+1. Switch to the first terminal (running `func start`) and review the log messages **(1)** showing the extraction progress, including the Content Understanding API calls.
 
-   ![](../media/Lab-02/image08.png)
+   ![](../media/Lab-02/image23.png)
 
-### Task 5: Examine extracted data in Cosmos DB
+1. In the Azure Portal, navigate to your **Cosmos DB (MongoDB API)** account **devde<inject key="DeploymentID" enableCopy="false" />cosmos** **(1)**.
 
-In this task, you will examine the extraction results stored in Cosmos DB to see the structured data that Content Understanding extracted.
+   ![](../media/Lab-02/image24.png)
 
-1. In the Azure Portal, navigate to your **Cosmos DB (MongoDB API)** account (**devde<inject key="DeploymentID" enableCopy="false" />cosmos**).
+1. Open **Data Explorer** **(1)**. Expand **data-extraction-db** **(2)** > **Documents** **(3)** and click on the document for **Collection1** **(4)**.
 
-1. Open **Data Explorer**. Expand **data-extraction-db** > **Documents** and browse the stored documents.
+   ![](../media/Lab-02/image25.png)
 
-   ![](../media/Lab-02/image09.png)
+1. Expand the **entities** **(1)** array and then the **fields** **(2)** object. You should see the 5 extracted fields with their values:
 
-1. Click on the document for **Collection1**. Examine the structure:
-
-   - **`id`** — Composite key: `Collection1-{extraction_config_hash}`
-   - **`config-id`** — References the extraction configuration used
-   - **`information.entities`** — Array of extracted lease entities
-
-1. Expand the **`entities`** array and then the **`fields`** object. You should see the 5 extracted fields:
-
-   | Field | What Content Understanding Extracted |
-   |-------|--------------------------------------|
-   | `license_grant_scope` | The scope of the license grant from the lease agreement |
-   | `lease_duration` | Duration terms of the lease |
-   | `termination_conditions` | Conditions under which the lease can be terminated |
-   | `compliance_audit_terms` | Audit and compliance requirements |
-   | `prohibited_uses` | Uses that are explicitly prohibited |
-
-   ![](../media/Lab-02/image10.png)
+   ![](../media/Lab-02/image26.png)
 
 1. For each extracted field, notice the detailed metadata:
 
-   - **`valueString`** — The actual extracted text
-   - **`confidence`** — A score between 0 and 1 indicating extraction confidence
-   - **`spans`** — Character offset and length in the original document
-   - **`source`** — Bounding box coordinates (page, x, y positions) for traceability
+   - **valueString** **(1)** — The actual extracted text
+   - **confidence** **(2)** — A score between 0 and 1 indicating extraction confidence
+   - **spans** — Character offset and length in the original document
+   - **source** — Bounding box coordinates for traceability
 
-   >**Why are confidence scores and bounding boxes important?** Confidence scores help you assess extraction reliability — low-confidence extractions may need human review. Bounding boxes enable you to highlight or link back to the exact location in the source document where the data was found, providing full traceability.
+   ![](../media/Lab-02/image27.png)
 
-   ![](../media/Lab-02/image11.png)
+   >**Note:** Confidence scores help assess extraction reliability — low-confidence extractions may need human review. Bounding boxes enable you to trace back to the exact location in the source document.
 
-1. Go back to your resource group and navigate to the **Storage Account** (name starts with **devde<inject key="DeploymentID" enableCopy="false" />sa**). Click **Data storage** > **Containers** > **processed**. You should see the markdown file generated by Content Understanding — this is the full document converted to structured markdown format.
+1. Go back to your resource group and click on the **Storage Account** **(1)** (name starts with **devde<inject key="DeploymentID" enableCopy="false" />sa**).
 
-   ![](../media/Lab-02/image12.png)
+   ![](../media/Lab-02/image28.png)
+
+1. In the left menu, click **Data storage** **(1)** > **Containers** **(2)**. Click on the **processed** **(3)** container. You should see the markdown file **(4)** generated by Content Understanding.
+
+   ![](../media/Lab-02/image29.png)
 
 ## Summary
 
-In this lab, you:
+In this lab, you have completed the following:
 
-1. Reviewed the extraction configuration schema that defines what fields to extract from documents.
-2. Started the Function App locally and verified the health check.
-3. Uploaded the extraction configuration, which automatically created a Content Understanding analyzer.
-4. Ingested a lease agreement PDF and extracted 5 structured fields using Azure Content Understanding.
-5. Examined the extraction results in Cosmos DB, including confidence scores and bounding box coordinates.
+- Set up the Python virtual environment and installed project dependencies.
+- Configured the application with Azure resource endpoints and signed in to Azure CLI.
+- Started the Function App locally and verified the health check.
+- Uploaded the extraction configuration, which automatically created a Content Understanding analyzer.
+- Ingested a lease agreement PDF and extracted 5 structured fields with confidence scores.
+- Examined the extraction results in Cosmos DB and the processed markdown in Blob Storage.
 
-In the next lab, you will query the extracted data using natural language powered by Azure OpenAI and Semantic Kernel.
+### You have successfully completed the lab. Click **Next >>** to proceed to the next lab.

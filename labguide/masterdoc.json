@@ -6,16 +6,16 @@
       "Number": 0,
       "FileName": "gettingstarted.md",
       "Title": "Getting Started",
-      "Description": "Overview of Azure Content Understanding, solution architecture, pre-deployed resources, and Azure Portal sign-in.",
-      "Duration": 15,
+      "Description": "Overview of Azure Content Understanding, solution architecture, lab environment access, and Azure Portal sign-in.",
+      "Duration": 10,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
     },
     {
       "Number": 1,
       "FileName": "Lab-01.md",
-      "Title": "Lab 01 - Explore Azure Resources and Configure Content Understanding",
-      "Description": "Explore pre-deployed Azure resources, navigate Azure AI Foundry and the Content Understanding project, verify the gpt-4o deployment, set up the Python environment, and configure the application.",
+      "Title": "Lab 01 - Create Azure AI Services and Explore Content Understanding",
+      "Description": "Explore pre-deployed Azure resources, create an Azure AI Services resource, store the API key in Key Vault, and navigate Azure AI Foundry.",
       "Duration": 60,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
@@ -23,8 +23,8 @@
     {
       "Number": 2,
       "FileName": "Lab-02.md",
-      "Title": "Lab 02 - Extract Documents Using Azure Content Understanding",
-      "Description": "Review extraction configs, start the Function App, upload field schemas to create Content Understanding analyzers, ingest a lease agreement, and examine extracted data in Cosmos DB.",
+      "Title": "Lab 02 - Configure and Extract Documents Using Content Understanding",
+      "Description": "Set up the Python environment, configure application endpoints, start the Function App locally, upload extraction config, ingest a lease agreement, and examine extracted data in Cosmos DB.",
       "Duration": 60,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
@@ -33,7 +33,7 @@
       "Number": 3,
       "FileName": "Lab-03.md",
       "Title": "Lab 03 - Query Extracted Data with Azure OpenAI",
-      "Description": "Query extraction results using natural language, explore multi-turn conversations, examine chat history in Cosmos DB, and understand Semantic Kernel orchestration.",
+      "Description": "Query extraction results using natural language, explore multi-turn conversations, examine chat history in Cosmos DB, and review Semantic Kernel orchestration code.",
       "Duration": 45,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
@@ -42,13 +42,13 @@
       "Number": 4,
       "FileName": "Lab-04.md",
       "Title": "Lab 04 - Deploy to Azure and Monitor",
-      "Description": "Deploy the Function App to Azure, configure and test deployed endpoints, and monitor with Application Insights live metrics.",
+      "Description": "Configure deployment settings, deploy the Function App to Azure, test deployed endpoints, and monitor with Application Insights.",
       "Duration": 45,
       "Url": "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final",
       "Type": "Lab"
     }
   ],
-  "TotalDuration": 225,
+  "TotalDuration": 220,
   "Prerequisites": {
     "Software": [
       "Python 3.12 (pre-installed)",
@@ -59,7 +59,7 @@
       "Visual Studio Code with extensions (pre-installed)"
     ],
     "AzureServices": [
-      "Azure AI Content Understanding (pre-deployed)",
+      "Azure AI Content Understanding (manually deployed in Lab 01)",
       "Azure OpenAI Service with gpt-4o (pre-deployed)",
       "Azure Functions (pre-deployed)",
       "Azure Cosmos DB - MongoDB API (pre-deployed)",

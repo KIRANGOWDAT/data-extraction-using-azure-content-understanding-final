@@ -8,12 +8,12 @@ In this lab, you will query the extracted document data using natural language. 
 
 ## Objectives
 
-After completing this lab, you will have:
+In this lab, you will complete the following tasks:
 
-- Queried extracted document data using natural language
-- Explored multi-turn conversations with contextual follow-ups
-- Examined chat history stored in Cosmos DB (SQL API)
-- Understood how Semantic Kernel orchestrates the query pipeline
+- Task 1: Query extraction results using natural language
+- Task 2: Explore multi-turn conversations
+- Task 3: Examine chat history in Cosmos DB
+- Task 4: Review the Semantic Kernel orchestration code
 
 ### Task 1: Query extraction results using natural language
 
@@ -27,7 +27,7 @@ In this task, you will use the query endpoint to ask questions about the data ex
    func start
    ```
 
-1. In your second terminal, send a query about the extracted lease data:
+1. In your second terminal, send a query about the extracted lease data by running the following command:
 
    ```
    curl.exe -X POST "http://localhost:7071/api/v1/query" `
@@ -36,22 +36,17 @@ In this task, you will use the query endpoint to ask questions about the data ex
      -d "{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What is the scope of the license grant in Collection1?\"}"
    ```
 
-   >**Understanding the request parameters:**
-   > - `cid` (Collection ID) — Identifies which collection to query. Must match the collection you ingested in Lab 02 (`Collection1`).
-   > - `sid` (Session ID) — Groups messages into a conversation thread for multi-turn chat.
-   > - `query` — Your natural language question.
-   > - `x-user` header — Identifies the user for chat history tracking.
-
-1. Review the response. It should contain:
-
-   - **`response`** — The LLM-generated answer about the license grant scope, based on the extracted data
-   - **`citations`** — References to the specific extracted fields that were used, including document names and field locations
-
-   >**How does this work?** The application uses Semantic Kernel with `FunctionChoiceBehavior.Required()`, which forces the LLM to call the `get_collection_data()` plugin function. This function retrieves all extracted fields for the specified collection from Cosmos DB. The LLM then uses this structured data as context to formulate its response — it never makes up information; it only references what was actually extracted.
-
    ![](../media/Lab-03/image01.png)
 
-1. Try another query about a different extracted field:
+   >**Note:** The request parameters are: `cid` (Collection ID — must match the collection from Lab 02), `sid` (Session ID — groups messages into a conversation), `query` (your natural language question), and `x-user` header (identifies the user for chat history).
+
+1. Review the response **(1)**. It should contain a **response** field with the LLM-generated answer about the license grant scope, and **citations** referencing the specific extracted fields used.
+
+   ![](../media/Lab-03/image02.png)
+
+   >**Note:** The application uses Semantic Kernel with `FunctionChoiceBehavior.Required()`, which forces the LLM to call the `get_collection_data()` plugin. This ensures every response is grounded in actual extracted data from Content Understanding — the LLM never makes up information.
+
+1. Try another query about a different extracted field by running the following command:
 
    ```
    curl.exe -X POST "http://localhost:7071/api/v1/query" `
@@ -60,15 +55,15 @@ In this task, you will use the query endpoint to ask questions about the data ex
      -d "{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What are the termination conditions?\"}"
    ```
 
-1. Review the response. Notice that the LLM provides specific termination conditions extracted from the document, with references back to the source.
+1. Review the response **(1)**. The LLM provides specific termination conditions extracted from the document, with references back to the source.
 
-   ![](../media/Lab-03/image02.png)
+   ![](../media/Lab-03/image03.png)
 
 ### Task 2: Explore multi-turn conversations
 
 In this task, you will explore how the system maintains conversation context across multiple queries using chat history.
 
-1. Send a follow-up query using the **same session ID** (`session1`):
+1. Send a follow-up query using the **same session ID** (`session1`) by running the following command:
 
    ```
    curl.exe -X POST "http://localhost:7071/api/v1/query" `
@@ -77,11 +72,11 @@ In this task, you will explore how the system maintains conversation context acr
      -d "{\"cid\": \"Collection1\", \"sid\": \"session1\", \"query\": \"What about compliance audit terms?\"}"
    ```
 
-1. Notice that the response builds on the context from previous questions. Because the session ID is the same, the LLM has access to the conversation history and can provide more contextual answers.
+1. Notice that the response **(1)** builds on the context from previous questions. Because the session ID is the same, the LLM has access to the full conversation history.
 
-   ![](../media/Lab-03/image03.png)
+   ![](../media/Lab-03/image04.png)
 
-1. Now start a **new session** with a different session ID to see a fresh conversation:
+1. Now start a **new session** with a different session ID by running the following command:
 
    ```
    curl.exe -X POST "http://localhost:7071/api/v1/query" `
@@ -90,23 +85,23 @@ In this task, you will explore how the system maintains conversation context acr
      -d "{\"cid\": \"Collection1\", \"sid\": \"session2\", \"query\": \"Summarize all key terms in Collection1.\"}"
    ```
 
-1. This response should be independent of the previous conversation since it uses a different session ID. The LLM retrieves all extracted fields and provides a comprehensive summary.
+1. This response **(1)** is independent of the previous conversation since it uses a different session ID. The LLM retrieves all extracted fields and provides a comprehensive summary.
 
-   >**Multi-turn architecture:** Chat history is stored in the **Cosmos DB SQL API** (separate from the MongoDB API used for documents). Each message includes the user query, assistant response, session ID, and user identifier. The system limits chat history to the 20 most recent messages per session to keep the LLM context manageable.
-
-   ![](../media/Lab-03/image04.png)
+   ![](../media/Lab-03/image05.png)
 
 ### Task 3: Examine chat history in Cosmos DB
 
 In this task, you will examine the conversation history stored in Cosmos DB SQL API.
 
-1. In the Azure Portal, navigate to your **Cosmos DB SQL API account** (**devde<inject key="DeploymentID" enableCopy="false" />cosmoskb**).
+1. In the Azure Portal, navigate to your **Cosmos DB SQL API account** **devde<inject key="DeploymentID" enableCopy="false" />cosmoskb** **(1)**.
 
-1. Open **Data Explorer**. Expand **knowledge-base-db** > **chat-history** and browse the stored documents.
+   ![](../media/Lab-03/image06.png)
 
-   ![](../media/Lab-03/image05.png)
+1. In the left menu, click **Data Explorer** **(1)**. Expand **knowledge-base-db** **(2)** > **chat-history** **(3)** and click on **Items** **(4)**.
 
-1. You should see conversation entries for your sessions. Each document contains:
+   ![](../media/Lab-03/image07.png)
+
+1. Click on a document **(1)** to view its contents. Each document contains:
 
    | Field | Description |
    |-------|-------------|
@@ -115,57 +110,60 @@ In this task, you will examine the conversation history stored in Cosmos DB SQL 
    | `user_id` | The user identifier from the `x-user` header |
    | `role` | Either `user` (your query) or `assistant` (LLM response) |
    | `content` | The actual message text |
-   | `timestamp` | When the message was created |
-
-1. Compare `session1` (which has multiple messages showing conversation context) with `session2` (which has a single exchange). This demonstrates how session-based chat history enables multi-turn conversations.
-
-   >**Why separate Cosmos DB accounts?** The MongoDB API account stores extraction configurations and extracted document data — its flexible schema handles nested field arrays, bounding boxes, and confidence scores. The SQL API account stores chat history — simple key-value lookups by session ID with a partition key of `/id` for efficient retrieval.
-
-   ![](../media/Lab-03/image06.png)
-
-### Task 4: Understand the Semantic Kernel orchestration
-
-In this task, you will examine the code to understand how Semantic Kernel orchestrates the query pipeline.
-
-1. In VS Code, open **src/controllers/inference_controller.py**.
-
-1. Notice the key section where Semantic Kernel is configured:
-
-   - A `CollectionPlugin` is created that exposes a `get_collection_data()` function. This function queries Cosmos DB for all extracted fields in the specified collection.
-   - The plugin is added to the Semantic Kernel instance.
-   - `FunctionChoiceBehavior.Required()` is set, which **forces** the LLM to call the plugin function on every request — the LLM cannot respond without first retrieving data from Cosmos DB.
-
-   >**Why forced tool calling?** Without `Required()`, the LLM might try to answer from its training data instead of the extracted documents. By forcing tool usage, every response is grounded in actual extracted data from Content Understanding.
-
-   ![](../media/Lab-03/image07.png)
-
-1. Open **src/controllers/ingest_lease_documents_controller.py** and review how the ingestion pipeline:
-
-   - Loads the extraction config from Cosmos DB
-   - Calls Content Understanding's analyzer via `begin_analyze_data()` with the raw PDF bytes
-   - Polls for the result using `poll_result()` (Content Understanding is a long-running async operation)
-   - Stores the extracted output in Cosmos DB
 
    ![](../media/Lab-03/image08.png)
 
-1. Open **src/services/azure_content_understanding_client.py** and review the REST API integration:
-
-   - **Analyzer creation:** `PUT /contentunderstanding/analyzers/{id}` — creates a custom analyzer based on `prebuilt-documentAnalyzer`
-   - **Document analysis:** `POST /contentunderstanding/analyzers/{id}:analyze` — sends document bytes for extraction
-   - **Polling:** `GET {operation-location}` — polls the async operation until `succeeded` or `failed`
-   - **Authentication:** Uses `Ocp-Apim-Subscription-Key` header with the AI Services key
-
-   >**Content Understanding API pattern:** All Content Understanding operations are **asynchronous long-running operations (LROs)**. You submit a request, receive an `operation-location` URL in the response headers, and poll that URL until the operation completes. This pattern handles large documents that may take several minutes to process.
+1. Compare documents from `session1` (which has multiple messages showing conversation context) versus `session2` (which has a single exchange). This demonstrates how session-based chat history enables multi-turn conversations.
 
    ![](../media/Lab-03/image09.png)
 
+### Task 4: Review the Semantic Kernel orchestration code
+
+In this task, you will examine the code to understand how Semantic Kernel orchestrates the query pipeline.
+
+1. In VS Code, expand **src** **(1)** > **controllers** **(2)** in the Explorer panel and click on **inference_controller.py** **(3)**.
+
+   ![](../media/Lab-03/image10.png)
+
+1. Locate the section where Semantic Kernel is configured. Notice the key elements:
+
+   - A `CollectionPlugin` **(1)** is created that exposes a `get_collection_data()` function
+   - The plugin is added to the Semantic Kernel instance
+   - `FunctionChoiceBehavior.Required()` **(2)** is set, forcing the LLM to call the plugin on every request
+
+   ![](../media/Lab-03/image11.png)
+
+   >**Note:** Without `Required()`, the LLM might try to answer from its training data instead of the extracted documents. By forcing tool usage, every response is grounded in actual extracted data from Content Understanding.
+
+1. Open **src** **(1)** > **controllers** **(2)** > **ingest_lease_documents_controller.py** **(3)** to review the ingestion pipeline:
+
+   ![](../media/Lab-03/image12.png)
+
+1. Notice how the controller loads the extraction config from Cosmos DB **(1)**, calls Content Understanding via `begin_analyze_data()` **(2)**, polls for the result, and stores the output in Cosmos DB **(3)**.
+
+   ![](../media/Lab-03/image13.png)
+
+1. Open **src** **(1)** > **services** **(2)** > **azure_content_understanding_client.py** **(3)** to review the REST API integration:
+
+   ![](../media/Lab-03/image14.png)
+
+1. Review the key API operations:
+
+   - **Analyzer creation** **(1)**: `PUT /contentunderstanding/analyzers/{id}` — creates a custom analyzer
+   - **Document analysis** **(2)**: `POST /contentunderstanding/analyzers/{id}:analyze` — sends document for extraction
+   - **Polling** **(3)**: `GET {operation-location}` — polls until the async operation completes
+
+   ![](../media/Lab-03/image15.png)
+
+   >**Note:** All Content Understanding operations are **asynchronous long-running operations (LROs)**. You submit a request, receive an `operation-location` URL, and poll until completion. This pattern handles large documents that may take several minutes to process.
+
 ## Summary
 
-In this lab, you:
+In this lab, you have completed the following:
 
-1. Queried extracted document data using natural language and received LLM-generated responses with citations.
-2. Explored multi-turn conversations using session-based chat history.
-3. Examined the chat history stored in Cosmos DB SQL API.
-4. Understood how Semantic Kernel forces the LLM to retrieve data from Cosmos DB before responding, ensuring all answers are grounded in extracted data.
+- Queried extracted document data using natural language and received LLM-generated responses with citations.
+- Explored multi-turn conversations using session-based chat history.
+- Examined the chat history stored in Cosmos DB SQL API.
+- Reviewed the Semantic Kernel orchestration code that forces the LLM to retrieve data from Cosmos DB before responding.
 
-In the next lab, you will deploy the Function App to Azure and monitor it with Application Insights.
+### You have successfully completed the lab. Click **Next >>** to proceed to the next lab.
