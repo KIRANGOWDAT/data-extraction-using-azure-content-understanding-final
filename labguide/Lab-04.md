@@ -28,10 +28,10 @@ In this task, you will deploy the Function App to Azure using Azure Functions Co
 
 1. Stop the locally running Function App by pressing **Ctrl+C** in the terminal running `func start`.
 
-1. Retrieve your **Function App name** from Azure. The Terraform deployment created a Function App with a random suffix, so the exact name varies per deployment:
+1. Retrieve your **Function App name** from Azure. The ARM deployment created a Function App with a random suffix, so the exact name varies per deployment:
 
    ```
-   $funcApp = (az functionapp list --resource-group <inject key="AzureResourceGroup" enableCopy="false" /> --query "[0].name" -o tsv)
+   $funcApp = (az functionapp list --resource-group <inject key="Resource Group Name" enableCopy="false" /> --query "[0].name" -o tsv)
    echo "Your Function App name is: $funcApp"
    ```
 
@@ -67,7 +67,7 @@ In this task, you will update the application configuration for the deployed env
    |---------|-------|
    | `key_vault_uri` | `https://devde<inject key="DeploymentID" enableCopy="false" />kv.vault.azure.net/` |
    | `tenant_id` | Your Azure tenant ID (same as `local:`) |
-   | `user_managed_identity.client_id` | Leave empty (`""`) — the deployed app uses **system-assigned managed identity** |
+   | `user_managed_identity.client_id` | Copy the `APP_CLIENT_ID` value from your Function App's **Configuration > Application settings** in the Azure Portal |
    | `llm.endpoint` | `https://aoaidevde<inject key="DeploymentID" enableCopy="false" />.openai.azure.com/openai/deployments/gpt-4o` (same as `local:`) |
    | `content_understanding.endpoint` | `https://devde<inject key="DeploymentID" enableCopy="false" />ais.cognitiveservices.azure.com/` (same as `local:`) |
    | `content_understanding.project_id` | Your AI Foundry project ID (same as `local:`) |
@@ -130,7 +130,7 @@ In this task, you will use Application Insights to monitor the deployed Function
 
 1. In the Azure Portal, navigate to your **Function App** (the name you captured in the `$funcApp` variable). In the left menu, click **Settings** > **Application Insights**, then click the **Application Insights resource name** link to open the connected App Insights instance.
 
-   >**Note:** The Function App has its own Application Insights resource (auto-created during Terraform deployment). Make sure you open the one linked to the Function App.
+   >**Note:** The Function App has its own Application Insights resource (auto-created during deployment). Make sure you open the one linked to the Function App.
 
 1. Once in the Application Insights resource, click on **Investigate** > **Live Metrics** in the left menu to see real-time request rates, response times, and failures.
 

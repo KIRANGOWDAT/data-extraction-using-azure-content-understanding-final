@@ -37,17 +37,17 @@ In this task, you will use the query endpoint to ask questions about the data ex
    ```
 
    >**Understanding the request parameters:**
-   > - `cid` (Collection ID) — Identifies which collection to query. Must match the collection you ingested in Lab 02 (`Collection1`).
-   > - `sid` (Session ID) — Groups messages into a conversation thread for multi-turn chat.
-   > - `query` — Your natural language question.
-   > - `x-user` header — Identifies the user for chat history tracking.
+   > - `cid` (Collection ID) â€” Identifies which collection to query. Must match the collection you ingested in Lab 02 (`Collection1`).
+   > - `sid` (Session ID) â€” Groups messages into a conversation thread for multi-turn chat.
+   > - `query` â€” Your natural language question.
+   > - `x-user` header â€” Identifies the user for chat history tracking.
 
 1. Review the response. It should contain:
 
-   - **`response`** — The LLM-generated answer about the license grant scope, based on the extracted data
-   - **`citations`** — References to the specific extracted fields that were used, including document names and field locations
+   - **`response`** â€” The LLM-generated answer about the license grant scope, based on the extracted data
+   - **`citations`** â€” References to the specific extracted fields that were used, including document names and field locations
 
-   >**How does this work?** The application uses Semantic Kernel with `FunctionChoiceBehavior.Required()`, which forces the LLM to call the `get_collection_data()` plugin function. This function retrieves all extracted fields for the specified collection from Cosmos DB. The LLM then uses this structured data as context to formulate its response — it never makes up information; it only references what was actually extracted.
+   >**How does this work?** The application uses Semantic Kernel with `FunctionChoiceBehavior.Required()`, which forces the LLM to call the `get_collection_data()` plugin function. This function retrieves all extracted fields for the specified collection from Cosmos DB. The LLM then uses this structured data as context to formulate its response â€” it never makes up information; it only references what was actually extracted.
 
 1. Try another query about a different extracted field:
 
@@ -109,7 +109,7 @@ In this task, you will examine the conversation history stored in Cosmos DB SQL 
 
 1. Compare `session1` (which has multiple messages showing conversation context) with `session2` (which has a single exchange). This demonstrates how session-based chat history enables multi-turn conversations.
 
-   >**Why separate Cosmos DB accounts?** The MongoDB API account stores extraction configurations and extracted document data — its flexible schema handles nested field arrays, bounding boxes, and confidence scores. The SQL API account stores chat history — simple key-value lookups by session ID with a partition key of `/id` for efficient retrieval.
+   >**Why separate Cosmos DB accounts?** The MongoDB API account stores extraction configurations and extracted document data â€” its flexible schema handles nested field arrays, bounding boxes, and confidence scores. The SQL API account stores chat history â€” simple key-value lookups by session ID with a partition key of `/id` for efficient retrieval.
 
 ### Task 4: Understand the Semantic Kernel orchestration
 
@@ -121,7 +121,7 @@ In this task, you will examine the code to understand how Semantic Kernel orches
 
    - A `CollectionPlugin` is created that exposes a `get_collection_data()` function. This function queries Cosmos DB for all extracted fields in the specified collection.
    - The plugin is added to the Semantic Kernel instance.
-   - `FunctionChoiceBehavior.Required()` is set, which **forces** the LLM to call the plugin function on every request — the LLM cannot respond without first retrieving data from Cosmos DB.
+   - `FunctionChoiceBehavior.Required()` is set, which **forces** the LLM to call the plugin function on every request â€” the LLM cannot respond without first retrieving data from Cosmos DB.
 
    >**Why forced tool calling?** Without `Required()`, the LLM might try to answer from its training data instead of the extracted documents. By forcing tool usage, every response is grounded in actual extracted data from Content Understanding.
 
@@ -134,9 +134,9 @@ In this task, you will examine the code to understand how Semantic Kernel orches
 
 1. Open **src/services/azure_content_understanding_client.py** and review the REST API integration:
 
-   - **Analyzer creation:** `PUT /contentunderstanding/analyzers/{id}` — creates a custom analyzer based on `prebuilt-documentAnalyzer`
-   - **Document analysis:** `POST /contentunderstanding/analyzers/{id}:analyze` — sends document bytes for extraction
-   - **Polling:** `GET {operation-location}` — polls the async operation until `succeeded` or `failed`
+   - **Analyzer creation:** `PUT /contentunderstanding/analyzers/{id}` â€” creates a custom analyzer based on `prebuilt-documentAnalyzer`
+   - **Document analysis:** `POST /contentunderstanding/analyzers/{id}:analyze` â€” sends document bytes for extraction
+   - **Polling:** `GET {operation-location}` â€” polls the async operation until `succeeded` or `failed`
    - **Authentication:** Uses `Ocp-Apim-Subscription-Key` header with the AI Services key
 
    >**Content Understanding API pattern:** All Content Understanding operations are **asynchronous long-running operations (LROs)**. You submit a request, receive an `operation-location` URL in the response headers, and poll that URL until the operation completes. This pattern handles large documents that may take several minutes to process.

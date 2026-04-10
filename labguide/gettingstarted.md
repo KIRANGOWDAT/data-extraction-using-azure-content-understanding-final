@@ -30,14 +30,13 @@ The following tools and services are **pre-installed** on your lab VM — no man
 |------|---------|---------|
 | Python | 3.12 | Application runtime |
 | Azure CLI | Latest | Azure resource management |
-| Terraform | Latest | Infrastructure deployment (automated) |
 | Azure Functions Core Tools | v4 | Local function app development |
 | Git | Latest | Source control |
 | Node.js | 18 LTS | Azure Functions dependency |
 | Visual Studio Code | Latest | Code editor with extensions |
 | .NET 8.0 SDK | Latest | Azure Functions host |
 
-The following **Azure resources** are pre-deployed automatically via Terraform:
+The following **Azure resources** are pre-deployed automatically:
 
 | Resource | Purpose |
 |----------|---------|
@@ -54,7 +53,7 @@ The following **Azure resources** are pre-deployed automatically via Terraform:
 
 The solution implements two main workflows — **Document Ingestion** (extraction) and **Document Enquiry** (querying) — running as HTTP-triggered Azure Functions.
 
-![Architecture Diagram](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/media/architecture.png)
+![Architecture Diagram](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/media/architecture.png)
 
 ### Document Ingestion Workflow (Right Side)
 
