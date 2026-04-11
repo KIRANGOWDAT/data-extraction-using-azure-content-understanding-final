@@ -62,8 +62,22 @@ function Install-Chocolatey {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     Set-ExecutionPolicy Bypass -Scope Process -Force
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    choco feature enable -n allowGlobalConfirmation
+    # Ensure choco.exe is on PATH
+    $chocoPath = "C:\ProgramData\chocolatey\bin"
+    if (Test-Path $chocoPath) {
+        $env:Path = "$chocoPath;" + [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    } else {
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    }
+    # Verify choco is accessible
+    $chocoExe = Get-Command choco -ErrorAction SilentlyContinue
+    if ($chocoExe) {
+        Write-Log "Chocolatey found at: $($chocoExe.Source)"
+        choco feature enable -n allowGlobalConfirmation
+    } else {
+        Write-Log "ERROR: Chocolatey not found on PATH after install!"
+        Write-Log "PATH: $env:Path"
+    }
     Write-Log "Chocolatey installed."
 }
 
@@ -250,38 +264,14 @@ function Set-AutoLogon {
 }
 
 function Set-BlackDesktopBackground {
-    # Set solid black wallpaper for the admin user
+    # Set solid black wallpaper via default user registry (no hive loading needed)
     $wallpaperRegPath = "HKU:\.DEFAULT\Control Panel\Desktop"
     try {
         Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaper" -Value "" -Force
         Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaperStyle" -Value "0" -Force
-    } catch { Write-Log "Could not set default user wallpaper: $_" }
+    } catch { }
 
-    # Set for current user profile via NTUSER.DAT
-    $ntUserDat = "C:\Users\$adminUsername\NTUSER.DAT"
-    if (Test-Path $ntUserDat) {
-        try {
-            reg load "HKU\TempUser" $ntUserDat *>$null
-            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f *>$null
-            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f *>$null
-            reg add "HKU\TempUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f *>$null
-            reg unload "HKU\TempUser" *>$null
-        } catch { Write-Log "Could not load user hive for wallpaper: $_" }
-    }
-
-    # Also set via Default user profile so any new logon inherits black background
-    $defaultNtUser = "C:\Users\Default\NTUSER.DAT"
-    if (Test-Path $defaultNtUser) {
-        try {
-            reg load "HKU\DefaultUser" $defaultNtUser *>$null
-            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f *>$null
-            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f *>$null
-            reg add "HKU\DefaultUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f *>$null
-            reg unload "HKU\DefaultUser" *>$null
-        } catch { Write-Log "Could not set default profile wallpaper: $_" }
-    }
-
-    # Remove any Windows Spotlight / theme wallpaper policies
+    # Enforce black background via Group Policy for all users
     $personalizePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
     if (-not (Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
     Set-ItemProperty -Path $personalizePath -Name "LockScreenImage" -Value "" -Force
