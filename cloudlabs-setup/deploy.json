@@ -9,7 +9,8 @@
     "ODLID": { "type": "string", "defaultValue": "" },
     "DeploymentID": { "type": "string" },
     "trainerUserName": { "type": "string", "defaultValue": "" },
-    "trainerUserPassword": { "type": "securestring", "defaultValue": "" }
+    "trainerUserPassword": { "type": "securestring", "defaultValue": "" },
+    "AzureUserObjectID": { "type": "string", "defaultValue": "" }
   },
   "variables": {
     "location": "swedencentral",
@@ -40,6 +41,7 @@
     "aiProjectName": "[concat(variables('prefix'), '-rag-project')]",
 
     "kvSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
+    "kvAdminRoleId": "00482a5a-887f-4fb3-b363-3b7fe8e74483",
     "storageBlobContribRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
     "docDbContribRoleId": "5bd9cd88-fe45-4216-938b-f97437e15450",
 
@@ -62,7 +64,7 @@
               "access": "Allow",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "3389",
+              "destinationPortRange": "443",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*"
             }
@@ -503,6 +505,19 @@
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('kvSecretsUserRoleId'))]",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
         "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[concat(variables('kvName'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('AzureUserName'), variables('kvAdminRoleId')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('kvAdminRoleId'))]",
+        "principalId": "[parameters('AzureUserObjectID')]",
+        "principalType": "User"
       }
     },
     {
