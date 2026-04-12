@@ -147,8 +147,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsDesktop",
-            "offer": "windows-ent-cpc",
-            "sku": "win11-24h2-ent-cpc-m365",
+            "offer": "windows-11",
+            "sku": "win11-24h2-ent",
             "version": "latest"
           },
           "osDisk": {

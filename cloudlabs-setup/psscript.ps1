@@ -54,6 +54,8 @@ function Set-WindowsFirewallRules {
     # Ensure RDP is enabled
     Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0 -ErrorAction SilentlyContinue
+    # Disable Windows Firewall entirely (NSG handles security)
+    Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False -ErrorAction SilentlyContinue
 }
 
 # ============================================================================
