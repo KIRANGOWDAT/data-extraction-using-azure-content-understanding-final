@@ -56,6 +56,9 @@ function Set-WindowsFirewallRules {
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0 -ErrorAction SilentlyContinue
     # Disable Windows Firewall entirely (NSG handles security)
     Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False -ErrorAction SilentlyContinue
+    # Move RDP to port 443 (some ISPs block 3389)
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name "PortNumber" -Value 443 -ErrorAction SilentlyContinue
+    Restart-Service TermService -Force -ErrorAction SilentlyContinue
 }
 
 # ============================================================================
@@ -269,14 +272,27 @@ function Set-AutoLogon {
 }
 
 function Set-BlackDesktopBackground {
-    # Set solid black wallpaper via default user registry (no hive loading needed)
-    $wallpaperRegPath = "HKU:\.DEFAULT\Control Panel\Desktop"
+    # Create a 1x1 black BMP file
+    $bmpPath = "C:\Windows\Web\Wallpaper\black.bmp"
+    $bmpBytes = [byte[]](66,77,62,0,0,0,0,0,0,0,62,0,0,0,40,0,0,0,1,0,0,0,1,0,0,0,1,0,24,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+    Set-Content -Path $bmpPath -Value $bmpBytes -Encoding Byte
+
+    # Disable Windows Spotlight
+    $cloudContent = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
+    if (-not (Test-Path $cloudContent)) { New-Item -Path $cloudContent -Force | Out-Null }
+    Set-ItemProperty -Path $cloudContent -Name "DisableWindowsSpotlightFeatures" -Value 1 -Type DWord
+    Set-ItemProperty -Path $cloudContent -Name "DisableSpotlightCollectionOnDesktop" -Value 1 -Type DWord
+
+    # Set default user wallpaper
     try {
-        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaper" -Value "" -Force
-        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaperStyle" -Value "0" -Force
+        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name "WallPaper" -Value $bmpPath -Force
+        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name "WallPaperStyle" -Value "2" -Force
     } catch { }
 
-    # Enforce black background via Group Policy for all users
+    # Create scheduled task to apply black wallpaper at user logon
+    schtasks /create /tn "SetBlackWallpaper" /tr "powershell.exe -ExecutionPolicy Bypass -Command Set-ItemProperty HKCU:\`"Control Panel\Desktop`" WallPaper C:\Windows\Web\Wallpaper\black.bmp;rundll32.exe user32.dll,UpdatePerUserSystemParameters" /sc onlogon /ru $adminUsername /rp $adminPassword /f 2>&1 | Out-Null
+
+    # Lock screen policy
     $personalizePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
     if (-not (Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
     Set-ItemProperty -Path $personalizePath -Name "LockScreenImage" -Value "" -Force
