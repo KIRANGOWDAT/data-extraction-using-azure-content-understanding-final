@@ -12,7 +12,7 @@ Hands-on lab for building intelligent document extraction pipelines using Azure 
 | 3 | [Query Extracted Data with Azure OpenAI](labguide/Lab-03.md) | 45 min |
 | 4 | [Deploy to Azure and Monitor](labguide/Lab-04.md) | 45 min |
 
-**Total Duration:** ~3.5 hours
+**Total Duration:** ~4 hours
 
 ## Architecture
 
