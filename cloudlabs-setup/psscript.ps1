@@ -269,10 +269,6 @@ function Create-DesktopShortcuts {
     $sc3 = $WshShell.CreateShortcut("$desktopPath\Azure Portal.url")
     $sc3.TargetPath = "https://portal.azure.com"
     $sc3.Save()
-    $validateSrc = "C:\LabFiles\data-extraction-using-azure-content-understanding\cloudlabs-setup\Validate-LabSetup.ps1"
-    if (Test-Path $validateSrc) {
-        Copy-Item -Path $validateSrc -Destination "$desktopPath\Validate-LabSetup.ps1" -Force
-    }
     Write-Log "Desktop shortcuts created."
 }
 
