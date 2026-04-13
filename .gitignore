@@ -16,9 +16,5 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Terraform
-.terraform/
-*.tfstate*
-
 # Logs
 *.log

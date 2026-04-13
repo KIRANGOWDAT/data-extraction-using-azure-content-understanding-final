@@ -20,7 +20,7 @@
     "vmName": "[concat('labvm-', parameters('DeploymentID'))]",
     "vmSize": "Standard_D4s_v3",
     "nsgName": "[concat(variables('vmName'), '-nsg')]",
-    "vnetName": "labvNet",
+    "vnetName": "[concat(variables('prefix'), '-vnet')]",
     "subnetName": "default",
     "pipName": "[concat(variables('vmName'), '-pip')]",
     "nicName": "[concat(variables('vmName'), '-nic')]",
@@ -382,6 +382,7 @@
         "sku": { "family": "A", "name": "standard" },
         "enableRbacAuthorization": true,
         "enableSoftDelete": true,
+        "enablePurgeProtection": false,
         "softDeleteRetentionInDays": 7,
         "enabledForTemplateDeployment": true
       }

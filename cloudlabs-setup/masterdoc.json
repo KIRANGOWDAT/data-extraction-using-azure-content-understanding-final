@@ -3,30 +3,29 @@
   "Language": "English",
   "Files": [
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/gettingstarted.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/labguide/gettingstarted.md",
       "FileName": "Getting Started.md",
       "Order": 1
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-01.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/labguide/Lab-01.md",
       "FileName": "Lab 01 - Explore Azure Resources and Configure Content Understanding.md",
       "Order": 2
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-02.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/labguide/Lab-02.md",
       "FileName": "Lab 02 - Extract Documents Using Azure Content Understanding.md",
       "Order": 3
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-03.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/labguide/Lab-03.md",
       "FileName": "Lab 03 - Query Extracted Data with Azure OpenAI.md",
       "Order": 4
     },
     {
-      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/main/labguide/Lab-04.md",
+      "RawFilePath": "https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/labguide/Lab-04.md",
       "FileName": "Lab 04 - Deploy to Azure and Monitor.md",
       "Order": 5
     }
   ]
-}
 }

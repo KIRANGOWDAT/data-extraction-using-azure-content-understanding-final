@@ -107,13 +107,6 @@ function Install-AzureFunctionsCoreTools {
     Write-Log "Functions Core Tools installed."
 }
 
-function Install-Terraform {
-    Write-Log "Installing Terraform..."
-    choco install terraform -y
-    Refresh-Path
-    Write-Log "Terraform installed."
-}
-
 function Install-VSCode {
     Write-Log "Installing Visual Studio Code..."
     choco install vscode -y --params "/NoDesktopIcon"
@@ -216,6 +209,7 @@ function Configure-EdgeBrowser {
     Set-ItemProperty -Path $edgeRegPath -Name "RestoreOnStartup" -Value 4 -Type DWord
     Set-ItemProperty -Path $edgeRegPath -Name "NewTabPageContentEnabled" -Value 0 -Type DWord
     Set-ItemProperty -Path $edgeRegPath -Name "PromotionalTabsEnabled" -Value 0 -Type DWord
+    Set-ItemProperty -Path $edgeRegPath -Name "DefaultPopupsSetting" -Value 2 -Type DWord
     New-Item -Path "$edgeRegPath\RestoreOnStartupURLs" -Force | Out-Null
     Set-ItemProperty -Path "$edgeRegPath\RestoreOnStartupURLs" -Name "1" -Value "about:blank"
 }
@@ -291,20 +285,54 @@ function Set-AutoLogon {
 }
 
 function Set-BlackDesktopBackground {
-    # Set solid black wallpaper for the admin user
-    $wallpaperRegPath = "HKU:\.DEFAULT\Control Panel\Desktop"
-    try {
-        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaper" -Value "" -Force
-        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaperStyle" -Value "0" -Force
-    } catch { Write-Log "Could not set default user wallpaper: $_" }
+    Write-Log "Setting desktop wallpaper to plain black..."
 
-    # Set for current user profile via NTUSER.DAT
+    # Create a 1x1 black BMP image (v1 proven approach)
+    $wallpaperPath = "C:\Windows\Web\Wallpaper\black.bmp"
+    Add-Type -AssemblyName System.Drawing
+    $bmp = New-Object System.Drawing.Bitmap(1, 1)
+    $bmp.SetPixel(0, 0, [System.Drawing.Color]::Black)
+    $bmp.Save($wallpaperPath, [System.Drawing.Imaging.ImageFormat]::Bmp)
+    $bmp.Dispose()
+
+    # Set wallpaper via PersonalizationCSP (critical for Azure VMs)
+    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP"
+    if (-not (Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
+    Set-ItemProperty -Path $regPath -Name "DesktopImagePath" -Value $wallpaperPath -Type String
+    Set-ItemProperty -Path $regPath -Name "DesktopImageUrl" -Value $wallpaperPath -Type String
+    Set-ItemProperty -Path $regPath -Name "DesktopImageStatus" -Value 1 -Type DWord
+
+    # Set for default user profile (new logons)
+    $defaultRegPath = "Registry::HKEY_USERS\.DEFAULT\Control Panel\Desktop"
+    Set-ItemProperty -Path $defaultRegPath -Name "WallPaper" -Value $wallpaperPath -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $defaultRegPath -Name "WallpaperStyle" -Value "2" -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $defaultRegPath -Name "TileWallpaper" -Value "0" -ErrorAction SilentlyContinue
+
+    # Set for current user (SYSTEM during script execution)
+    $currentRegPath = "HKCU:\Control Panel\Desktop"
+    Set-ItemProperty -Path $currentRegPath -Name "WallPaper" -Value $wallpaperPath -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $currentRegPath -Name "WallpaperStyle" -Value "2" -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $currentRegPath -Name "TileWallpaper" -Value "0" -ErrorAction SilentlyContinue
+
+    # Set for admin user profile if SID is resolable
+    try {
+        $adminSid = (New-Object System.Security.Principal.NTAccount($adminUsername)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+        $adminRegPath = "Registry::HKEY_USERS\$adminSid\Control Panel\Desktop"
+        if (Test-Path $adminRegPath) {
+            Set-ItemProperty -Path $adminRegPath -Name "WallPaper" -Value $wallpaperPath -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $adminRegPath -Name "WallpaperStyle" -Value "2" -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $adminRegPath -Name "TileWallpaper" -Value "0" -ErrorAction SilentlyContinue
+        }
+    } catch { Write-Log "Could not resolve admin SID for wallpaper, using fallback." }
+
+    # Fallback: also load NTUSER.DAT for the admin user
     $ntUserDat = "C:\Users\$adminUsername\NTUSER.DAT"
     if (Test-Path $ntUserDat) {
         try {
             reg load "HKU\TempUser" $ntUserDat 2>$null
-            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
-            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d $wallpaperPath /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "2" /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v TileWallpaper /t REG_SZ /d "0" /f 2>$null
             reg add "HKU\TempUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
             reg unload "HKU\TempUser" 2>$null
         } catch { Write-Log "Could not load user hive for wallpaper: $_" }
@@ -315,8 +343,9 @@ function Set-BlackDesktopBackground {
     if (Test-Path $defaultNtUser) {
         try {
             reg load "HKU\DefaultUser" $defaultNtUser 2>$null
-            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
-            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d $wallpaperPath /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "2" /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v TileWallpaper /t REG_SZ /d "0" /f 2>$null
             reg add "HKU\DefaultUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
             reg unload "HKU\DefaultUser" 2>$null
         } catch { Write-Log "Could not set default profile wallpaper: $_" }
@@ -351,7 +380,6 @@ Install-Python
 Install-AzureCLI
 Install-NodeJS
 Install-AzureFunctionsCoreTools
-Install-Terraform
 Install-VSCode
 Install-DotNet
 Install-WindowsTerminal
