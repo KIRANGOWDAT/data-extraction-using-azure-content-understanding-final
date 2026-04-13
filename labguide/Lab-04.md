@@ -1,4 +1,4 @@
-# Lab 04: Deploy to Azure and Monitor
+﻿# Lab 04: Deploy to Azure and Monitor
 
 ### Estimated Duration: 45 Minutes
 
@@ -19,7 +19,7 @@ In this lab, you will complete the following tasks:
 
 In this task, you will update the application configuration for the deployed environment and prepare the Function App for deployment.
 
-1. In VS Code, stop the locally running Function App by pressing **Ctrl+C** **(1)** in the terminal where `func start` is running.
+1. In VS Code, stop the locally running Function App by pressing **Ctrl+C** in the terminal where `func start` is running.
 
    ![](../media/Lab-04/image01.png)
 
@@ -31,17 +31,13 @@ In this task, you will update the application configuration for the deployed env
 
    ![](../media/Lab-04/image03.png)
 
-1. Update the `dev:` section with the same Azure resource endpoints you configured for the `local:` section in Lab 02. Additionally, locate the `user_managed_identity.client_id` field **(1)**.
+1. Update the `dev:` section with the same Azure resource endpoints you configured for the `local:` section in Lab 02. Additionally, locate the `user_managed_identity.client_id` field.
 
-   ![](../media/Lab-04/image04.png)
 
-1. To find the managed identity client ID, go to the Azure Portal. Navigate to your resource group **(1)** and click on the **Managed Identity** **(2)** resource (named **devde<inject key="DeploymentID" enableCopy="false" />func**-identity or similar).
+1. To find the managed identity client ID, go to the Azure Portal. Navigate to your resource group and click on the **Managed Identity** resource (named **devde<inject key="DeploymentID" enableCopy="false" />func**-identity or similar).
+On the Managed Identity overview page, copy the **Client ID** value.
 
    ![](../media/Lab-04/image05.png)
-
-1. On the Managed Identity overview page, copy the **Client ID** **(1)** value.
-
-   ![](../media/Lab-04/image06.png)
 
 1. Go back to VS Code. Paste the Client ID into the `user_managed_identity.client_id` field **(1)** in the `dev:` section of `app_config.yaml`.
 
@@ -80,7 +76,7 @@ In this task, you will deploy the Function App to Azure using Azure Functions Co
 
    ![](../media/Lab-04/image09.png)
 
-1. Wait for the deployment to complete. This may take 3–5 minutes. You should see output ending with:
+1. Wait for the deployment to complete. This may take 3-5 minutes. You should see output ending with:
 
    ```
    Remote build succeeded!
@@ -98,16 +94,14 @@ In this task, you will test all the deployed API endpoints to verify the full ex
    curl.exe https://$funcApp.azurewebsites.net/api/v1/health
    ```
 
-1. Verify all services show as **healthy** **(1)**.
+1. Verify all services show as **healthy**.
 
    ![](../media/Lab-04/image11.png)
 
 1. Upload the extraction configuration to the deployed endpoint by running the following command:
 
    ```
-   curl.exe -X PUT "https://$funcApp.azurewebsites.net/api/configs/document-extraction/versions/v1.0" `
-     -H "Content-Type: application/json" `
-     -d @configs/document-extraction-v1.0.json
+   curl.exe -X PUT "https://$funcApp.azurewebsites.net/api/configs/document-extraction/versions/v1.0" -H "Content-Type: application/json" -d @configs/document-extraction-v1.0.json
    ```
 
    ![](../media/Lab-04/image12.png)
@@ -115,25 +109,20 @@ In this task, you will test all the deployed API endpoints to verify the full ex
 1. Ingest the document to the deployed endpoint by running the following command:
 
    ```
-   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" `
-     -H "Content-Type: application/octet-stream" `
-     --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/ingest-documents/Collection1/Lease1/MicrosoftLeaseAgreement" -H "Content-Type: application/octet-stream" --data-binary @document_samples/Agreement_for_leasing_or_renting_certain_Microsoft_Software_Products.pdf
    ```
 
    ![](../media/Lab-04/image13.png)
 
-   >**Note:** This step may take 2–3 minutes as Content Understanding processes the document on the Azure-hosted Function App.
+   >**Note:** This step may take 2-3 minutes as Content Understanding processes the document on the Azure-hosted Function App.
 
 1. Query the deployed endpoint by running the following command:
 
    ```
-   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" `
-     -H "Content-Type: application/json" `
-     -H "x-user: labuser@contoso.com" `
-     -d "{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"Summarize all key terms in Collection1.\"}"
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" -H "Content-Type: application/json" -H "x-user: labuser@contoso.com" -d '{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"Summarize all key terms in Collection1.\"}'
    ```
 
-1. Verify that the response **(1)** includes the answer with citations, confirming the full pipeline works end-to-end in Azure.
+1. Verify that the response includes the answer with citations, confirming the full pipeline works end-to-end in Azure.
 
    ![](../media/Lab-04/image14.png)
 
@@ -141,11 +130,11 @@ In this task, you will test all the deployed API endpoints to verify the full ex
 
 In this task, you will use Application Insights to monitor the deployed Function App.
 
-1. In the Azure Portal, navigate to your **Function App** **(1)** (the name you captured in the `$funcApp` variable).
+1. In the Azure Portal, navigate to your **Function App** (the name you captured in the `$funcApp` variable).
 
    ![](../media/Lab-04/image15.png)
 
-1. In the left menu, click **Settings** **(1)** > **Application Insights** **(2)**, then click the Application Insights resource name link **(3)** to open the connected App Insights instance.
+1. In the left menu, click **Monitoring** **(1)** > **Application Insights** **(2)**, then click the Application Insights resource name link **(3)** to open the connected App Insights instance.
 
    ![](../media/Lab-04/image16.png)
 
@@ -156,17 +145,14 @@ In this task, you will use Application Insights to monitor the deployed Function
 1. While Live Metrics is open, go back to the VS Code terminal and send another query to generate traffic:
 
    ```
-   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" `
-     -H "Content-Type: application/json" `
-     -H "x-user: labuser@contoso.com" `
-     -d "{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"What are the prohibited uses?\"}"
+   curl.exe -X POST "https://$funcApp.azurewebsites.net/api/v1/query" -H "Content-Type: application/json" -H "x-user: labuser@contoso.com" -d '{\"cid\": \"Collection1\", \"sid\": \"azure-session1\", \"query\": \"What are the prohibited uses?\"}'
    ```
 
-1. Go back to the Azure Portal. Observe the Live Metrics dashboard **(1)** updating in real-time — you should see the incoming request, response time, and dependency calls to Cosmos DB and Azure OpenAI.
+1. Go back to the Azure Portal. Observe the Live Metrics dashboard updating in real-time - you should see the incoming request, response time, and dependency calls to Cosmos DB and Azure OpenAI.
 
    ![](../media/Lab-04/image18.png)
 
-1. In the left menu, click **Investigate** **(1)** > **Transaction search** **(2)**. Click **See all data in the last 24 hours** **(3)**.
+1. In the left menu, click **Investigate** **(1)** > **Search** **(2)**. Click **See all data in the last 24 hours** **(3)**.
 
    ![](../media/Lab-04/image19.png)
 
@@ -187,7 +173,7 @@ In this lab, you have completed the following:
 
 - Configured the deployed Function App with Azure resource endpoints and managed identity client ID.
 - Deployed the Function App to Azure using Azure Functions Core Tools.
-- Tested all deployed endpoints — health check, config upload, document ingestion, and natural language query.
+- Tested all deployed endpoints - health check, config upload, document ingestion, and natural language query.
 - Monitored the application with Application Insights live metrics and transaction search.
 
 ## Congratulations!

@@ -1,10 +1,10 @@
-# Data Extraction Using Azure Content Understanding
+﻿# Data Extraction Using Azure Content Understanding
 
 ### Overall Estimated Duration: 4 Hours
 
 ## Overview
 
-In this hands-on lab, you will build an intelligent document extraction and query pipeline using **Azure AI Content Understanding** — a capability within Azure AI Services that extracts structured data from unstructured documents such as lease agreements, contracts, and invoices.
+In this hands-on lab, you will build an intelligent document extraction and query pipeline using **Azure AI Content Understanding** - a capability within Azure AI Services that extracts structured data from unstructured documents such as lease agreements, contracts, and invoices.
 
 You will create an Azure AI Services resource, configure custom extraction field schemas, ingest PDF documents through Content Understanding analyzers, store the extracted fields in Azure Cosmos DB, and query the results using natural language powered by **Azure OpenAI (gpt-4o)** and **Semantic Kernel**. Finally, you will deploy the solution as an Azure Function App and monitor it with Application Insights.
 
@@ -12,15 +12,15 @@ You will create an Azure AI Services resource, configure custom extraction field
 
 In this lab, you will complete the following:
 
-- **Create and configure Azure AI Services** — Deploy the core Content Understanding resource and connect it to Azure AI Foundry.
-- **Configure a Document Extraction Pipeline** — Set up a Python-based Azure Functions application that connects to Content Understanding, Azure OpenAI, Cosmos DB, Key Vault, and Blob Storage.
-- **Extract Structured Data from Documents** — Define extraction field schemas, create Content Understanding analyzers, ingest PDF documents, and examine extracted results with confidence scores.
-- **Query Extracted Data Using Natural Language** — Use Azure OpenAI's gpt-4o model with Semantic Kernel to ask questions about extracted document data and explore multi-turn conversations.
-- **Deploy and Monitor on Azure** — Deploy the extraction pipeline as an Azure Function App and monitor performance using Application Insights.
+- **Create and configure Azure AI Services** - Deploy the core Content Understanding resource and connect it to Azure AI Foundry.
+- **Configure a Document Extraction Pipeline** - Set up a Python-based Azure Functions application that connects to Content Understanding, Azure OpenAI, Cosmos DB, Key Vault, and Blob Storage.
+- **Extract Structured Data from Documents** - Define extraction field schemas, create Content Understanding analyzers, ingest PDF documents, and examine extracted results with confidence scores.
+- **Query Extracted Data Using Natural Language** - Use Azure OpenAI's gpt-4o model with Semantic Kernel to ask questions about extracted document data and explore multi-turn conversations.
+- **Deploy and Monitor on Azure** - Deploy the extraction pipeline as an Azure Function App and monitor performance using Application Insights.
 
 ## Pre-requisites
 
-The following tools and services are **pre-installed** on your lab VM — no manual setup is needed:
+The following tools and services are **pre-installed** on your lab VM - no manual setup is needed:
 
 | Tool | Version | Purpose |
 |------|---------|---------|
@@ -34,7 +34,7 @@ The following tools and services are **pre-installed** on your lab VM — no man
 
 ## Architecture
 
-The solution implements two main workflows — **Document Ingestion** (extraction) and **Document Enquiry** (querying) — running as HTTP-triggered Azure Functions.
+The solution implements two main workflows - **Document Ingestion** (extraction) and **Document Enquiry** (querying) - running as HTTP-triggered Azure Functions.
 
 ![Architecture Diagram](https://raw.githubusercontent.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final/master/media/architecture.png)
 
@@ -109,23 +109,6 @@ Feel free to **Start, Restart, or Stop** your virtual machine as needed from the
 
 1. Now, click on **Next** from the lower right corner to move on to the next page.
 
-   ![](../media/gettingstarted/image10.png)
-
-## Let's Get Started with Azure Portal
-
-1. On your virtual machine, click on the **Azure Portal** shortcut on the desktop.
-
-1. You'll see the **Sign into Microsoft Azure** tab. Enter your credentials:
-
-   - **Email/Username:** <inject key="AzureAdUserEmail"></inject>
-
-1. Next, provide your password and click **Sign in**:
-
-   - **Password:** <inject key="AzureAdUserPassword"></inject>
-
-1. If you see the pop-up **Stay Signed in?**, click **Yes**.
-
-1. If a **Welcome to Microsoft Azure** pop-up window appears, click **Cancel** to skip the tour.
 
 ## Support Contact
 

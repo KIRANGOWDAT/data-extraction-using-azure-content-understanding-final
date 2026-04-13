@@ -49,16 +49,8 @@ function Enable-LongPaths {
 }
 
 function Set-WindowsFirewallRules {
-    New-NetFirewallRule -DisplayName "Allow Azure Functions Port 7071" -Direction Inbound -LocalPort 7071 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue *>$null
-    New-NetFirewallRule -DisplayName "Allow HTTPS 443" -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue *>$null
-    # Ensure RDP is enabled
-    Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0 -ErrorAction SilentlyContinue
-    # Disable Windows Firewall entirely (NSG handles security)
-    Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False -ErrorAction SilentlyContinue
-    # Move RDP to port 443 (some ISPs block 3389)
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name "PortNumber" -Value 443 -ErrorAction SilentlyContinue
-    Restart-Service TermService -Force -ErrorAction SilentlyContinue
+    New-NetFirewallRule -DisplayName "Allow Azure Functions Port 7071" -Direction Inbound -LocalPort 7071 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
+    New-NetFirewallRule -DisplayName "Allow HTTPS 443" -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
 }
 
 # ============================================================================
@@ -70,22 +62,8 @@ function Install-Chocolatey {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     Set-ExecutionPolicy Bypass -Scope Process -Force
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    # Ensure choco.exe is on PATH
-    $chocoPath = "C:\ProgramData\chocolatey\bin"
-    if (Test-Path $chocoPath) {
-        $env:Path = "$chocoPath;" + [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    } else {
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    }
-    # Verify choco is accessible
-    $chocoExe = Get-Command choco -ErrorAction SilentlyContinue
-    if ($chocoExe) {
-        Write-Log "Chocolatey found at: $($chocoExe.Source)"
-        choco feature enable -n allowGlobalConfirmation
-    } else {
-        Write-Log "ERROR: Chocolatey not found on PATH after install!"
-        Write-Log "PATH: $env:Path"
-    }
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    choco feature enable -n allowGlobalConfirmation
     Write-Log "Chocolatey installed."
 }
 
@@ -151,7 +129,6 @@ function Install-VSCode {
         & $codePath --install-extension tomoki1207.pdf --force 2>&1 | Out-Null
         Write-Log "VS Code extensions installed."
     }
-    Write-Log "VS Code installed."
 }
 
 function Install-DotNet {
@@ -163,7 +140,7 @@ function Install-DotNet {
 
 function Install-WindowsTerminal {
     Write-Log "Installing Windows Terminal..."
-    choco install microsoft-windows-terminal -y --no-progress 2>&1 | Out-Null
+    choco install microsoft-windows-terminal -y
     Write-Log "Windows Terminal installed."
 }
 
@@ -178,16 +155,54 @@ function Clone-LabRepository {
     Refresh-Path
     $gitPath = "C:\Program Files\Git\bin\git.exe"
     if (Test-Path $gitPath) {
-        & $gitPath clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1 | Out-Null
+        & $gitPath clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1
     } else {
-        git clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1 | Out-Null
+        git clone "https://github.com/KIRANGOWDAT/data-extraction-using-azure-content-understanding-final.git" "$labFilesPath\data-extraction-using-azure-content-understanding" 2>&1
     }
     Write-Log "Repository cloned."
 }
 
 # ============================================================================
-#  (Azure resources are deployed by the ARM template, not this script)
+#  CONFIGURE LOCAL SETTINGS & PYTHON VENV
 # ============================================================================
+
+function Setup-PythonVenv {
+    Write-Log "Setting up Python virtual environment..."
+    $repoPath = "C:\LabFiles\data-extraction-using-azure-content-understanding"
+    if (Test-Path $repoPath) {
+        Push-Location $repoPath
+        & "C:\Python312\python.exe" -m venv .venv 2>&1 | Out-Null
+        & "$repoPath\.venv\Scripts\pip.exe" install --upgrade pip 2>&1 | Out-Null
+        & "$repoPath\.venv\Scripts\pip.exe" install -r requirements.txt 2>&1 | Out-Null
+        # Pre-create analyzer_cache to prevent func host restart during ingest
+        New-Item -ItemType Directory -Path "$repoPath\src\analyzer_cache" -Force | Out-Null
+        Pop-Location
+        Write-Log "Python venv created and dependencies installed."
+    } else {
+        Write-Log "WARNING: Repository not found, skipping venv setup."
+    }
+}
+
+function Fix-LocalSettings {
+    Write-Log "Updating local.settings.json with storage connection string..."
+    $settingsPath = "C:\LabFiles\data-extraction-using-azure-content-understanding\src\local.settings.json"
+    if (Test-Path $settingsPath) {
+        $content = Get-Content $settingsPath -Raw
+        # Replace UseDevelopmentStorage=true with empty string (no Azurite on VM)
+        $content = $content -replace '"UseDevelopmentStorage=true"', '""'
+        Set-Content -Path $settingsPath -Value $content -Force
+        Write-Log "local.settings.json updated."
+    } else {
+        Write-Log "WARNING: local.settings.json not found."
+    }
+}
+
+function Configure-RDPPort443 {
+    Write-Log "Configuring RDP to listen on port 443..."
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name "PortNumber" -Value 443 -Force
+    netsh advfirewall firewall add rule name="RDP-443" dir=in action=allow protocol=tcp localport=443 2>$null
+    Write-Log "RDP port set to 443. Will take effect after restart."
+}
 
 # ============================================================================
 #  UI CONFIGURATION
@@ -260,6 +275,10 @@ function Create-DesktopShortcuts {
     $sc3 = $WshShell.CreateShortcut("$desktopPath\Azure Portal.url")
     $sc3.TargetPath = "https://portal.azure.com"
     $sc3.Save()
+    $validateSrc = "C:\LabFiles\data-extraction-using-azure-content-understanding\cloudlabs-setup\Validate-LabSetup.ps1"
+    if (Test-Path $validateSrc) {
+        Copy-Item -Path $validateSrc -Destination "$desktopPath\Validate-LabSetup.ps1" -Force
+    }
     Write-Log "Desktop shortcuts created."
 }
 
@@ -272,27 +291,38 @@ function Set-AutoLogon {
 }
 
 function Set-BlackDesktopBackground {
-    # Create a 1x1 black BMP file
-    $bmpPath = "C:\Windows\Web\Wallpaper\black.bmp"
-    $bmpBytes = [byte[]](66,77,62,0,0,0,0,0,0,0,62,0,0,0,40,0,0,0,1,0,0,0,1,0,0,0,1,0,24,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-    Set-Content -Path $bmpPath -Value $bmpBytes -Encoding Byte
-
-    # Disable Windows Spotlight
-    $cloudContent = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
-    if (-not (Test-Path $cloudContent)) { New-Item -Path $cloudContent -Force | Out-Null }
-    Set-ItemProperty -Path $cloudContent -Name "DisableWindowsSpotlightFeatures" -Value 1 -Type DWord
-    Set-ItemProperty -Path $cloudContent -Name "DisableSpotlightCollectionOnDesktop" -Value 1 -Type DWord
-
-    # Set default user wallpaper
+    # Set solid black wallpaper for the admin user
+    $wallpaperRegPath = "HKU:\.DEFAULT\Control Panel\Desktop"
     try {
-        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name "WallPaper" -Value $bmpPath -Force
-        Set-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\Desktop" -Name "WallPaperStyle" -Value "2" -Force
-    } catch { }
+        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaper" -Value "" -Force
+        Set-ItemProperty -Path $wallpaperRegPath -Name "WallPaperStyle" -Value "0" -Force
+    } catch { Write-Log "Could not set default user wallpaper: $_" }
 
-    # Create scheduled task to apply black wallpaper at user logon
-    schtasks /create /tn "SetBlackWallpaper" /tr "powershell.exe -ExecutionPolicy Bypass -Command Set-ItemProperty HKCU:\`"Control Panel\Desktop`" WallPaper C:\Windows\Web\Wallpaper\black.bmp;rundll32.exe user32.dll,UpdatePerUserSystemParameters" /sc onlogon /ru $adminUsername /rp $adminPassword /f 2>&1 | Out-Null
+    # Set for current user profile via NTUSER.DAT
+    $ntUserDat = "C:\Users\$adminUsername\NTUSER.DAT"
+    if (Test-Path $ntUserDat) {
+        try {
+            reg load "HKU\TempUser" $ntUserDat 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
+            reg add "HKU\TempUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
+            reg unload "HKU\TempUser" 2>$null
+        } catch { Write-Log "Could not load user hive for wallpaper: $_" }
+    }
 
-    # Lock screen policy
+    # Also set via Default user profile so any new logon inherits black background
+    $defaultNtUser = "C:\Users\Default\NTUSER.DAT"
+    if (Test-Path $defaultNtUser) {
+        try {
+            reg load "HKU\DefaultUser" $defaultNtUser 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaper /t REG_SZ /d "" /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Desktop" /v WallPaperStyle /t REG_SZ /d "0" /f 2>$null
+            reg add "HKU\DefaultUser\Control Panel\Colors" /v Background /t REG_SZ /d "0 0 0" /f 2>$null
+            reg unload "HKU\DefaultUser" 2>$null
+        } catch { Write-Log "Could not set default profile wallpaper: $_" }
+    }
+
+    # Remove any Windows Spotlight / theme wallpaper policies
     $personalizePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
     if (-not (Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
     Set-ItemProperty -Path $personalizePath -Name "LockScreenImage" -Value "" -Force
@@ -324,25 +354,17 @@ Install-AzureFunctionsCoreTools
 Install-Terraform
 Install-VSCode
 Install-DotNet
+Install-WindowsTerminal
 
 Write-Log "Phase 3: Cloning repository..."
 Clone-LabRepository
 
-Write-Log "Phase 3.5: Cleaning up unnecessary files from repository..."
-$repoRoot = "C:\LabFiles\data-extraction-using-azure-content-understanding"
-$foldersToRemove = @(".devcontainer", ".github", ".vscode", "cloudlabs-setup", "docs", "iac", "labguide", "media", "tests")
-$filesToRemove = @("deploy.sh", "requirements_dev.txt", "pytest.ini", ".flake8", ".gitattributes")
-foreach ($folder in $foldersToRemove) {
-    $path = Join-Path $repoRoot $folder
-    if (Test-Path $path) { Remove-Item -Path $path -Recurse -Force; Write-Log "Removed $folder/" }
-}
-foreach ($file in $filesToRemove) {
-    $path = Join-Path $repoRoot $file
-    if (Test-Path $path) { Remove-Item -Path $path -Force; Write-Log "Removed $file" }
-}
-Write-Log "Repository cleanup complete."
+Write-Log "Phase 4: Setting up application environment..."
+Setup-PythonVenv
+Fix-LocalSettings
+Configure-RDPPort443
 
-Write-Log "Phase 4: Configuring user experience..."
+Write-Log "Phase 5: Configuring user experience..."
 Create-DesktopShortcuts
 Set-BlackDesktopBackground
 if ($adminPassword -ne "") {
@@ -356,4 +378,4 @@ Write-Log "========================================"
 Stop-Transcript
 
 $completionTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force | Out-Null
+New-Item -ItemType File -Path "C:\WindowsAzure\Logs\LabSetupComplete.txt" -Value "Setup completed at $completionTime" -Force

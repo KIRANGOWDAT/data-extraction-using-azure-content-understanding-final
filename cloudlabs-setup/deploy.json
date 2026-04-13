@@ -42,6 +42,7 @@
 
     "kvSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
     "kvAdminRoleId": "00482a5a-887f-4fb3-b363-3b7fe8e74483",
+    "cogServicesUserRoleId": "a97b65f3-24c7-4388-baec-2e87135dc908",
     "storageBlobContribRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
     "docDbContribRoleId": "5bd9cd88-fe45-4216-938b-f97437e15450",
 
@@ -57,7 +58,7 @@
       "properties": {
         "securityRules": [
           {
-            "name": "AllowRDP",
+            "name": "AllowRDP-443",
             "properties": {
               "priority": 1000,
               "direction": "Inbound",
@@ -136,8 +137,15 @@
       "apiVersion": "2023-07-01",
       "name": "[variables('vmName')]",
       "location": "[variables('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]": {}
+        }
+      },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]"
       ],
       "properties": {
         "hardwareProfile": { "vmSize": "[variables('vmSize')]" },
@@ -149,8 +157,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsDesktop",
-            "offer": "windows-11",
-            "sku": "win11-24h2-ent",
+            "offer": "windows-ent-cpc",
+            "sku": "win11-24h2-ent-cpc-m365",
             "version": "latest"
           },
           "osDisk": {
@@ -255,7 +263,7 @@
       "properties": {
         "resource": {
           "id": "Documents",
-          "shardKey": { "domain": "Hash" }
+          "shardKey": { "_id": "Hash" }
         }
       }
     },
@@ -269,7 +277,7 @@
       "properties": {
         "resource": {
           "id": "Configurations",
-          "shardKey": { "domain": "Hash" }
+          "shardKey": { "_id": "Hash" }
         }
       }
     },
@@ -334,6 +342,18 @@
       }
     },
     {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2024-10-01",
+      "name": "[variables('aiServicesName')]",
+      "location": "[variables('location')]",
+      "kind": "AIServices",
+      "sku": { "name": "S0" },
+      "properties": {
+        "customSubDomainName": "[variables('aiServicesName')]",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
       "type": "Microsoft.CognitiveServices/accounts/deployments",
       "apiVersion": "2024-10-01",
       "name": "[concat(variables('openaiName'), '/gpt-4o')]",
@@ -388,6 +408,18 @@
       ],
       "properties": {
         "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('openaiName')), '2024-10-01').key1]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[concat(variables('kvName'), '/ai-foundry-key')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+      ],
+      "properties": {
+        "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-10-01').key1]"
       }
     },
     {
@@ -508,19 +540,6 @@
       }
     },
     {
-      "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
-      "apiVersion": "2022-04-01",
-      "name": "[concat(variables('kvName'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('AzureUserName'), variables('kvAdminRoleId')))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]"
-      ],
-      "properties": {
-        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('kvAdminRoleId'))]",
-        "principalId": "[parameters('AzureUserObjectID')]",
-        "principalType": "User"
-      }
-    },
-    {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "name": "[guid(resourceGroup().id, variables('funcMiName'), variables('storageBlobContribRoleId'))]",
@@ -542,6 +561,34 @@
       ],
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('docDbContribRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('AzureUserObjectID'), variables('kvAdminRoleId'))]",
+      "condition": "[not(empty(parameters('AzureUserObjectID')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('kvAdminRoleId'))]",
+        "principalId": "[parameters('AzureUserObjectID')]",
+        "principalType": "User"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('funcMiName'), variables('cogServicesUserRoleId'), variables('aiServicesName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('cogServicesUserRoleId'))]",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('funcMiName'))).principalId]",
         "principalType": "ServicePrincipal"
       }
@@ -619,18 +666,21 @@
       "apiVersion": "2024-04-01",
       "name": "[concat(variables('aiHubName'), '/aiservices-connection')]",
       "dependsOn": [
-        "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]"
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiHubName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
       ],
       "properties": {
         "category": "AIServices",
-        "target": "[concat('https://', variables('aiServicesName'), '.cognitiveservices.azure.com/')]",
-        "authType": "AAD",
+        "target": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))).endpoint]",
+        "authType": "ApiKey",
+        "credentials": {
+          "key": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-10-01').key1]"
+        },
         "metadata": {
           "ApiType": "Azure",
-          "ResourceId": ""
+          "ResourceId": "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
         }
-      },
-      "condition": false
+      }
     }
   ],
   "outputs": {

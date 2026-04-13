@@ -1,10 +1,10 @@
-# Lab 01: Create Azure AI Services and Explore Content Understanding
+﻿# Lab 01: Create Azure AI Services and Explore Content Understanding
 
 ### Estimated Duration: 60 Minutes
 
 ## Overview
 
-In this lab, you will explore the Azure resources that were pre-deployed for the document extraction pipeline, then manually create the **Azure AI Services** resource that powers Content Understanding — the core extraction engine of this solution. You will store its API key securely in Key Vault and connect it to the Azure AI Foundry workspace.
+In this lab, you will explore the Azure resources that were pre-deployed for the document extraction pipeline, then manually create the **Azure AI Services** resource that powers Content Understanding - the core extraction engine of this solution. You will store its API key securely in Key Vault and connect it to the Azure AI Foundry workspace.
 
 ## Objectives
 
@@ -19,11 +19,11 @@ In this lab, you will complete the following tasks:
 
 In this task, you will navigate to the Azure Portal and review the resources that were automatically deployed for your lab environment.
 
-1. In the Azure Portal, click on **Resource groups** **(1)** from the left navigation menu, then click on your resource group **<inject key="Resource Group Name" enableCopy="false" />** **(2)**.
+1. In the Azure Portal, click on the search bar and type **Resource Groups** **(1)** and click on **Resource groups** **(2)**.
 
    ![](../media/Lab-01/image01.png)
 
-1. Review the list of deployed resources. You should see the following resources:
+1. Then click on your resource group **<inject key="Resource Group Name" enableCopy="false" />** . Review the list of deployed resources. You should see the following resources:
 
    | Resource Type | Name | Purpose |
    |---|---|---|
@@ -37,7 +37,7 @@ In this task, you will navigate to the Azure Portal and review the resources tha
 
    ![](../media/Lab-01/image02.png)
 
-   >**Note:** The **Azure AI Services** resource is not yet deployed — you will create it manually in the next task. This is the core resource that powers Azure Content Understanding for document extraction.
+   >**Note:** The **Azure AI Services** resource is not yet deployed - you will create it manually in the next task. This is the core resource that powers Azure Content Understanding for document extraction.
 
 1. Click on the **Key Vault** resource **devde<inject key="DeploymentID" enableCopy="false" />kv** **(1)**.
 
@@ -45,14 +45,14 @@ In this task, you will navigate to the Azure Portal and review the resources tha
 
 1. In the left menu, click on **Objects** **(1)** and then click **Secrets** **(2)**. Verify that two secrets are pre-populated:
 
-   - **cosmosdb-connection-string** — Cosmos DB MongoDB connection string
-   - **open-ai-key** — Azure OpenAI API key
+   - **cosmosdb-connection-string** - Cosmos DB MongoDB connection string
+   - **open-ai-key** - Azure OpenAI API key
 
    ![](../media/Lab-01/image04.png)
 
    >**Note:** You will add a third secret (**ai-foundry-key**) in Task 3 after creating the Azure AI Services resource.
 
-1. Go back to the resource group. Click on the **Azure OpenAI** resource **aoaidevde<inject key="DeploymentID" enableCopy="false" />** **(1)**.
+1. Go back to the resource group. Click on the **Azure OpenAI** resource **aoaidevde<inject key="DeploymentID" enableCopy="false" />**.
 
    ![](../media/Lab-01/image05.png)
 
@@ -60,7 +60,7 @@ In this task, you will navigate to the Azure Portal and review the resources tha
 
    ![](../media/Lab-01/image06.png)
 
-1. In Azure AI Foundry, navigate to **Deployments** **(1)** in the left menu. Verify that the **gpt-4o** **(2)** model is deployed with **Model version** 2024-08-06 and **Deployment type** Standard.
+1. In Azure AI Foundry, navigate to **Deployments** **(1)** in the left menu. Verify that the **gpt-4o** **(2)** model is deployed with **Model version** 2024-08-06 and **Deployment type** Global Standard.
 
    ![](../media/Lab-01/image07.png)
 
@@ -68,15 +68,11 @@ In this task, you will navigate to the Azure Portal and review the resources tha
 
 ### Task 2: Create an Azure AI Services resource
 
-In this task, you will create the Azure AI Services resource that hosts Azure Content Understanding — the extraction engine that analyzes documents and extracts structured fields.
+In this task, you will create the Azure AI Services resource that hosts Azure Content Understanding - the extraction engine that analyzes documents and extracts structured fields.
 
-1. Go back to the Azure Portal. In the top search bar, type **AI Services** **(1)** and select **AI Services** **(2)** from the results.
+1. Go back to the Azure Portal. In the top search bar, type **Azure AI Services** **(1)** and select **AI Services** **(2)** from the results in marketplace.
 
    ![](../media/Lab-01/image08.png)
-
-1. On the AI Services page, click **+ Create** **(1)**.
-
-   ![](../media/Lab-01/image09.png)
 
 1. On the **Create AI Services** page, enter the following details:
 
@@ -92,11 +88,11 @@ In this task, you will create the Azure AI Services resource that hosts Azure Co
 
    ![](../media/Lab-01/image11.png)
 
-1. Review the summary and click **Create** **(1)**.
+1. Review the summary and click **Create**.
 
    ![](../media/Lab-01/image12.png)
 
-1. Wait for the deployment to complete. This takes approximately 1–2 minutes. Once completed, click **Go to resource** **(1)**.
+1. Wait for the deployment to complete. This takes approximately 1-2 minutes. Once completed, click **Go to resource**.
 
    ![](../media/Lab-01/image13.png)
 
@@ -106,7 +102,7 @@ In this task, you will create the Azure AI Services resource that hosts Azure Co
 
    ![](../media/Lab-01/image14.png)
 
-1. Copy the **KEY 1** **(1)** value and the **Endpoint** **(2)** URL — you will need both in the next task and in Lab 02.
+1. Copy the **KEY 1** **(1)** value and the **Endpoint** **(2)** URL - you will need both in the next task and in Lab 02.
 
    ![](../media/Lab-01/image15.png)
 
@@ -131,17 +127,13 @@ In this task, you will store the AI Services API key as a secret in Azure Key Va
 1. On the **Create a secret** page, enter the following details:
 
    - **Name:** Enter `ai-foundry-key` **(1)**
-   - **Secret value:** Paste the **KEY 1** value you copied from the AI Services resource in the previous task **(2)**
+   - **Secret value:** Paste the **KEY 1** value you copied from the AI Services resource in the previous task **(2)** and Click **Create** **(3)**.
 
    ![](../media/Lab-01/image19.png)
 
-1. Click **Create** **(1)**.
-
-   ![](../media/Lab-01/image20.png)
-
 1. Verify that the secret **ai-foundry-key** **(1)** now appears in the list of secrets alongside **cosmosdb-connection-string** and **open-ai-key**.
 
-   ![](../media/Lab-01/image21.png)
+   ![](../media/Lab-01/image20.png)
 
    >**Note:** The application uses three Key Vault secrets: **cosmosdb-connection-string** (Cosmos DB MongoDB connection), **open-ai-key** (Azure OpenAI API key), and **ai-foundry-key** (AI Services key). Values marked with `type: "secret"` in the app configuration are automatically resolved from Key Vault at runtime.
 
@@ -149,25 +141,25 @@ In this task, you will store the AI Services API key as a secret in Azure Key Va
 
 In this task, you will explore Azure AI Foundry to understand the Content Understanding project that organizes your extraction analyzers.
 
-1. Go back to the resource group. Click on the **AI Services** resource **devde<inject key="DeploymentID" enableCopy="false" />ais** **(1)** that you created in Task 2.
+1. Go back to the resource group. Click on the **Azure AI project** resource **devde<inject key="DeploymentID" enableCopy="false" />-rag-project** **(1)**.
 
    ![](../media/Lab-01/image22.png)
 
-1. On the overview page, click **Go to Azure AI Foundry** **(1)** to open the AI Foundry portal.
+1. On the overview page under **Essentials**, locate and copy the **Project ID** **(1)** - you will need this value when configuring the application in Lab 02.
 
    ![](../media/Lab-01/image23.png)
 
-1. In Azure AI Foundry, you should see the project **devde<inject key="DeploymentID" enableCopy="false" />-rag-project** **(1)** in the left navigation. Click on it.
+   >**Note:** The Project ID is a GUID (e.g., `5852f594-79ff-45d3-b9a7-6704e465f26c`). Save this value to a text file - you will paste it into the application configuration in Lab 02, Task 2.
+
+1. Click **Launch studio** **(1)** to open the **Azure AI Foundry** portal.
 
    ![](../media/Lab-01/image24.png)
 
-   >**Note:** This project was pre-created as part of the lab setup. A project in AI Foundry provides a workspace where Content Understanding analyzers are organized. When the application creates an analyzer, it tags it with this project ID so it appears under this project.
-
-1. On the project overview page, locate and copy the **Project ID** **(1)** — you will need this value when configuring the application in Lab 02.
+1. In Azure AI Foundry, you should see the project **devde<inject key="DeploymentID" enableCopy="false" />-rag-project**. Click on it and explore the left navigation - notice the **Content Understanding** **(1)** option under **Build and customize**. This is where your extraction analyzers will appear after the application creates them in Lab 02.
 
    ![](../media/Lab-01/image25.png)
 
-   >**Note:** Save this Project ID to a text file — you will paste it into the application configuration in Lab 02, Task 2.
+   >**Note:** This project was pre-created as part of the lab setup. A project in AI Foundry provides a workspace where Content Understanding analyzers are organized. When the application creates an analyzer, it tags it with the project ID so it appears under this project.
 
 ## Summary
 
